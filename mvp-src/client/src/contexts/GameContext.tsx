@@ -4,6 +4,8 @@ import React, { createContext, useContext, useReducer, useCallback, useEffect, u
 export interface PlayerStats {
   name: string;
   gender: '男' | '女';
+  health: number;
+  maxHealth: number;
   stamina: number;
   maxStamina: number;
   hunger: number;
@@ -24,6 +26,7 @@ export interface NarrativeLine {
   text: string;
   links?: { label: string; command: string }[];
   timestamp?: number;
+  expired?: boolean;
 }
 
 export interface LocationNode {
@@ -111,6 +114,8 @@ const initialState: GameState = {
   player: {
     name: '新移民',
     gender: '男',
+    health: 120,
+    maxHealth: 120,
     stamina: 120,
     maxStamina: 120,
     hunger: 0, // 0 = 不饿，100 = 饿死
@@ -150,6 +155,16 @@ type GameAction =
 let narrativeIdCounter = 0;
 function makeId() {
   return `n_${++narrativeIdCounter}`;
+}
+
+// ===== 辅助函数 =====
+/** 将 narrative 中所有带 links 的历史记录标记为 expired */
+function expireNarrativeLinks(narrative: NarrativeLine[]): NarrativeLine[] {
+  return narrative.map(line =>
+    line.links && line.links.length > 0 && !line.expired
+      ? { ...line, expired: true }
+      : line
+  );
 }
 
 // ===== Reducer =====
@@ -221,7 +236,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         currentLocation: action.locationId,
         player: { ...state.player, stamina: newStamina },
-        narrative: [...state.narrative, sceneNarrative],
+        narrative: [...expireNarrativeLinks(state.narrative), sceneNarrative],
       };
     }
 
@@ -229,13 +244,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       if (state.foodSupply <= 0) {
         return {
           ...state,
-          narrative: [...state.narrative, {
+          narrative: [...expireNarrativeLinks(state.narrative), {
             id: makeId(), type: 'danger', text: '冰箱里已经没有食物了。',
           }],
         };
       }
       return {
         ...state,
+        narrative: expireNarrativeLinks(state.narrative),
         activeProgress: { label: '正在吃东西', duration: 3000, elapsed: 0, onComplete: 'eat_done' },
       };
     }
@@ -245,7 +261,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         if (state.player.money < 2) {
           return {
             ...state,
-            narrative: [...state.narrative, {
+            narrative: [...expireNarrativeLinks(state.narrative), {
               id: makeId(), type: 'danger', text: '你的余额不足。',
             }],
           };
@@ -258,7 +274,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           ...state,
           player: { ...state.player, money: state.player.money - 2 },
           inventory: newInv,
-          narrative: [...state.narrative, {
+          narrative: [...expireNarrativeLinks(state.narrative), {
             id: makeId(), type: 'system', text: '你购买了一瓶矿泉水。(¥-2, 体能恢复+1)',
           }],
         };
@@ -271,16 +287,16 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         if (action.action === 'sit') {
           return {
             ...state,
-            narrative: [...state.narrative, {
+            narrative: [...expireNarrativeLinks(state.narrative), {
               id: makeId(), type: 'scene',
-              text: '你坐在沙发上。弹簧有些塌陷，但比站着舒服多了。窗外传来远处的汽车喇叭声和隐约的人声喧嚣。',
+              text: '你坐在沙发上。弹簧有些塔陷，但比站着舒服多了。窗外传来远处的汽车喇叭声和隐约的人声喧嚣。',
             }],
           };
         }
         if (action.action === 'lie') {
           return {
             ...state,
-            narrative: [...state.narrative, {
+            narrative: [...expireNarrativeLinks(state.narrative), {
               id: makeId(), type: 'scene',
               text: '你躺在沙发上。天花板上有一道细长的裂缝，从灯座延伸到墙角。你盯着它看了一会儿，思绪逐渐放空。',
             }],
@@ -292,17 +308,41 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'GT_TICK': {
       // 每个 GT_TICK = 1 GT 分钟
-      // RT 1天 = GT 1周 → RT 1秒 ≈ GT 0.486分钟 → 约每2秒一个GT分钟
       const newGtTime = state.gtTime + 1;
-      // 饥饿：100点/24GT小时 = 100/1440GT分钟 ≈ 0.0694/GT分钟
-      const hungerRate = 100 / (24 * 60);
+
+      // 饥饿速率：3 个游戏日从 0 到 maxHunger
+      // 3天 = 3 * 24 * 60 = 4320 GT分钟
+      const hungerRate = state.player.maxHunger / (3 * 24 * 60);
       const newHunger = Math.min(state.player.maxHunger, state.player.hunger + hungerRate);
+
+      // 生命值扣除：饥饿值满后，1.5 个游戏日从 maxHealth 到 0
+      // 1.5天 = 1.5 * 24 * 60 = 2160 GT分钟
+      let newHealth = state.player.health;
+      const isStarving = newHunger >= state.player.maxHunger;
+      if (isStarving) {
+        const healthDrainRate = state.player.maxHealth / (1.5 * 24 * 60);
+        newHealth = Math.max(0, newHealth - healthDrainRate);
+      }
+
+      // 生命值归零 → 昏迷
+      const narrative = [...state.narrative];
+      if (newHealth <= 0 && state.player.health > 0) {
+        narrative.push({
+          id: makeId(),
+          type: 'danger',
+          text: '你的视线逐渐模糊，身体再也支撑不住了……你昏倒在地。（昏迷）',
+        });
+        // TODO: 后续实现昏迷后送医院、扣费逻辑
+      }
+
       return {
         ...state,
         gtTime: newGtTime,
+        narrative,
         player: {
           ...state.player,
           hunger: newHunger,
+          health: newHealth,
         },
       };
     }
@@ -327,14 +367,21 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       const onComplete = state.activeProgress.onComplete;
       let newState = { ...state, activeProgress: null };
       if (onComplete === 'eat_done') {
-        const newHunger = Math.max(0, newState.player.hunger - 5);
+        const hungerReduction = 10;
+        const newHunger = Math.max(0, newState.player.hunger - hungerReduction);
+        // 饥饿阈值联动：<=50% 才能恢复体能，>50% 不恢复
+        const hungerPercent = newHunger / newState.player.maxHunger;
+        const canRecoverStamina = hungerPercent <= 0.5;
+        const staminaRecovery = canRecoverStamina ? 2 : 0;
+        const newStamina = Math.min(newState.player.maxStamina, newState.player.stamina + staminaRecovery);
+        const staminaMsg = canRecoverStamina ? ', 体能 +2' : '';
         newState = {
           ...newState,
           foodSupply: newState.foodSupply - 1,
-          player: { ...newState.player, hunger: newHunger },
+          player: { ...newState.player, hunger: newHunger, stamina: newStamina },
           narrative: [...newState.narrative, {
             id: makeId(), type: 'system',
-            text: `你吃了一顿饭。(饥饿 -5, 剩余食物 ${newState.foodSupply - 1} 份)`,
+            text: `你吃了一顿饭。(饥饿 -${hungerReduction}${staminaMsg}, 剩余食物 ${newState.foodSupply - 1} 份)`,
           }],
         };
       }

@@ -12,9 +12,11 @@ export default function StatusBar() {
   const { state } = useGame();
   const { player, gtTime } = state;
 
+  const healthPercent = (player.health / player.maxHealth) * 100;
   const staminaPercent = (player.stamina / player.maxStamina) * 100;
   const hungerPercent = (player.hunger / player.maxHunger) * 100;
 
+  const healthColor = healthPercent > 50 ? 'text-dushi-success' : healthPercent > 20 ? 'text-yellow-400' : 'text-dushi-danger';
   const staminaColor = staminaPercent > 50 ? 'text-dushi-success' : staminaPercent > 20 ? 'text-yellow-400' : 'text-dushi-danger';
   const hungerColor = hungerPercent < 50 ? 'text-dushi-success' : hungerPercent < 80 ? 'text-yellow-400' : 'text-dushi-danger';
 
@@ -33,6 +35,9 @@ export default function StatusBar() {
       </div>
       {/* 下排：属性条 */}
       <div className="flex gap-4 text-xs">
+        <span className={healthColor}>
+          生命 {Math.floor(player.health)}/{player.maxHealth}
+        </span>
         <span className={staminaColor}>
           体能 {Math.floor(player.stamina)}/{player.maxStamina}
         </span>
