@@ -27,6 +27,12 @@ export interface NarrativeLine {
   links?: { label: string; command: string }[];
   timestamp?: number;
   expired?: boolean;
+  actionType?: string; // 标记为操作后的交互卡片，用于过期管理
+}
+
+export interface ActionResultConfig {
+  text: string;
+  links: { label: string; command: string }[];
 }
 
 export interface LocationNode {
@@ -38,6 +44,11 @@ export interface LocationNode {
   parent?: string;
   items?: { id: string; name: string; action: string }[];
   actions?: { label: string; command: string }[];
+  onActionComplete?: {
+    buy?: ActionResultConfig;
+    eat?: ActionResultConfig;
+    interact?: Record<string, ActionResultConfig>;
+  };
 }
 
 export type GamePhase = 'intro' | 'character_creation' | 'transit' | 'gameplay';
@@ -93,6 +104,15 @@ const LOCATIONS: Record<string, LocationNode> = {
       { label: '吃东西', command: 'eat' },
       { label: '去客厅', command: 'goto apartment_main' },
     ],
+    onActionComplete: {
+      eat: {
+        text: '你放下碗筷，胃里传来满足的暖意。',
+        links: [
+          { label: '吃东西', command: 'eat' },
+          { label: '去客厅', command: 'goto apartment_main' },
+        ]
+      }
+    }
   },
   'convenience_store': {
     id: 'convenience_store',
@@ -105,6 +125,15 @@ const LOCATIONS: Record<string, LocationNode> = {
       { label: '买矿泉水 (¥2)', command: 'buy water' },
       { label: '上楼回公寓', command: 'goto apartment_main' },
     ],
+    onActionComplete: {
+      buy: {
+        text: '收银员面无表情地接过钱，从柜台下拿出一瓶矿泉水放在你面前。',
+        links: [
+          { label: '买矿泉水', command: 'buy water' },
+          { label: '上楼回公寓', command: 'goto apartment_main' },
+        ]
+      }
+    }
   },
 };
 
@@ -134,6 +163,59 @@ const initialState: GameState = {
   foodSupply: 21, // 一周三餐 = 21 次
 };
 
+// ===== 工具函数 =====
+
+/**
+ * 获取操作完成后的交互卡片
+ * 优先使用场景配置的 onActionComplete，否则返回 null（不添加卡片）
+ */
+function getActionResultCard(
+  location: LocationNode,
+  actionType: 'buy' | 'eat' | 'interact',
+  actionKey?: string
+): NarrativeLine | null {
+  let config: ActionResultConfig | undefined;
+  
+  if (actionType === 'interact' && actionKey) {
+    config = location.onActionComplete?.interact?.[actionKey];
+  } else {
+    config = location.onActionComplete?.[actionType];
+  }
+  
+  if (!config) return null;
+  
+  return {
+    id: makeId(),
+    type: 'scene',
+    text: config.text,
+    links: config.links,
+    actionType, // 标记类型，用于后续过期
+  };
+}
+
+/**
+ * 过期掉之前同类型的交互卡片
+ * 用于连续操作时，只保留最新的可操作卡片
+ */
+function expireActionCards(narrative: NarrativeLine[], actionType: string): NarrativeLine[] {
+  return narrative.map(line =>
+    line.actionType === actionType && !line.expired
+      ? { ...line, expired: true }
+      : line
+  );
+}
+
+/**
+ * 过期所有操作后的交互卡片（用于场景切换）
+ */
+function expireAllActionCards(narrative: NarrativeLine[]): NarrativeLine[] {
+  return narrative.map(line =>
+    line.actionType && !line.expired
+      ? { ...line, expired: true }
+      : line
+  );
+}
+
 // ===== Action 类型 =====
 type GameAction =
   | { type: 'ADVANCE_INTRO' }
@@ -146,6 +228,7 @@ type GameAction =
   | { type: 'EAT_FOOD' }
   | { type: 'BUY_ITEM'; itemId: string }
   | { type: 'INTERACT'; targetId: string; action: string }
+  | { type: 'DRINK_WATER' }
   | { type: 'GT_TICK' }
   | { type: 'START_PROGRESS'; label: string; duration: number; onComplete: string }
   | { type: 'PROGRESS_TICK' }
@@ -232,11 +315,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         text: loc.description,
         links: loc.actions?.map(a => ({ label: a.label, command: a.command })),
       };
+      // 场景切换时：过期所有旧场景的链接 + 过期所有交互卡片
+      const clearedNarrative = expireNarrativeLinks(expireAllActionCards(state.narrative));
       return {
         ...state,
         currentLocation: action.locationId,
         player: { ...state.player, stamina: newStamina },
-        narrative: [...expireNarrativeLinks(state.narrative), sceneNarrative],
+        narrative: [...clearedNarrative, sceneNarrative],
       };
     }
 
@@ -244,14 +329,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       if (state.foodSupply <= 0) {
         return {
           ...state,
-          narrative: [...expireNarrativeLinks(state.narrative), {
+          narrative: [...state.narrative, {
             id: makeId(), type: 'danger', text: '冰箱里已经没有食物了。',
           }],
         };
       }
       return {
         ...state,
-        narrative: expireNarrativeLinks(state.narrative),
         activeProgress: { label: '正在吃东西', duration: 3000, elapsed: 0, onComplete: 'eat_done' },
       };
     }
@@ -270,13 +354,19 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         const newInv = existing
           ? state.inventory.map(i => i.id === 'water' ? { ...i, quantity: i.quantity + 1 } : i)
           : [...state.inventory, { id: 'water', name: '矿泉水', quantity: 1 }];
+        
+        const loc = state.locations[state.currentLocation];
+        const actionCard = getActionResultCard(loc, 'buy');
+        // 过期之前的购买交互卡片 + 过期当前场景的链接（避免原始场景链接和新卡片同时存在）
+        const clearedNarrative = expireNarrativeLinks(expireActionCards(state.narrative, 'buy'));
+        
         return {
           ...state,
           player: { ...state.player, money: state.player.money - 2 },
           inventory: newInv,
-          narrative: [...expireNarrativeLinks(state.narrative), {
-            id: makeId(), type: 'system', text: '你购买了一瓶矿泉水。(¥-2, 体能恢复+1)',
-          }],
+          narrative: actionCard
+            ? [...clearedNarrative, { id: makeId(), type: 'system', text: '你购买了一瓶矿泉水。' }, actionCard]
+            : [...clearedNarrative, { id: makeId(), type: 'system', text: '你购买了一瓶矿泉水。' }],
         };
       }
       return state;
@@ -287,7 +377,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         if (action.action === 'sit') {
           return {
             ...state,
-            narrative: [...expireNarrativeLinks(state.narrative), {
+            narrative: [...state.narrative, {
               id: makeId(), type: 'scene',
               text: '你坐在沙发上。弹簧有些塔陷，但比站着舒服多了。窗外传来远处的汽车喇叭声和隐约的人声喧嚣。',
             }],
@@ -296,7 +386,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         if (action.action === 'lie') {
           return {
             ...state,
-            narrative: [...expireNarrativeLinks(state.narrative), {
+            narrative: [...state.narrative, {
               id: makeId(), type: 'scene',
               text: '你躺在沙发上。天花板上有一道细长的裂缝，从灯座延伸到墙角。你盯着它看了一会儿，思绪逐渐放空。',
             }],
@@ -304,6 +394,30 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         }
       }
       return state;
+    }
+
+    case 'DRINK_WATER': {
+      const water = state.inventory.find(i => i.id === 'water');
+      if (!water || water.quantity <= 0) {
+        return {
+          ...state,
+          narrative: [...state.narrative, {
+            id: makeId(), type: 'system', text: '你没有矿泉水。',
+          }],
+        };
+      }
+      const newInv = state.inventory.map(i =>
+        i.id === 'water' ? { ...i, quantity: i.quantity - 1 } : i
+      ).filter(i => i.quantity > 0);
+      const newStamina = Math.min(state.player.maxStamina, state.player.stamina + 1);
+      return {
+        ...state,
+        inventory: newInv,
+        player: { ...state.player, stamina: newStamina },
+        narrative: [...state.narrative, {
+          id: makeId(), type: 'system', text: '你喝了一瓶矿泉水。',
+        }],
+      };
     }
 
     case 'GT_TICK': {
@@ -374,15 +488,19 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         const canRecoverStamina = hungerPercent <= 0.5;
         const staminaRecovery = canRecoverStamina ? 2 : 0;
         const newStamina = Math.min(newState.player.maxStamina, newState.player.stamina + staminaRecovery);
-        const staminaMsg = canRecoverStamina ? ', 体能 +2' : '';
+        
+        const loc = newState.locations[newState.currentLocation];
+        const actionCard = getActionResultCard(loc, 'eat');
+        // 过期之前的吃饭交互卡片 + 过期当前场景的链接
+        const clearedNarrative = expireNarrativeLinks(expireActionCards(newState.narrative, 'eat'));
+        
         newState = {
           ...newState,
           foodSupply: newState.foodSupply - 1,
           player: { ...newState.player, hunger: newHunger, stamina: newStamina },
-          narrative: [...newState.narrative, {
-            id: makeId(), type: 'system',
-            text: `你吃了一顿饭。(饥饿 -${hungerReduction}${staminaMsg}, 剩余食物 ${newState.foodSupply - 1} 份)`,
-          }],
+          narrative: actionCard
+            ? [...clearedNarrative, { id: makeId(), type: 'system', text: '你吃了一顿饭。' }, actionCard]
+            : [...clearedNarrative, { id: makeId(), type: 'system', text: '你吃了一顿饭。' }],
         };
       }
       return newState;
@@ -509,18 +627,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (trimmed === '喝水' || trimmed === '喝矿泉水') {
-      const water = state.inventory.find(i => i.id === 'water');
-      if (!water || water.quantity <= 0) {
-        dispatch({ type: 'ADD_NARRATIVE', line: { id: makeId(), type: 'system', text: '你没有矿泉水。' } });
-        return;
-      }
-      // 消耗矿泉水，恢复1体能
-      const newInv = state.inventory.map(i =>
-        i.id === 'water' ? { ...i, quantity: i.quantity - 1 } : i
-      ).filter(i => i.quantity > 0);
-      dispatch({ type: 'ADD_NARRATIVE', line: { id: makeId(), type: 'system', text: '你喝了一瓶矿泉水。(体能 +1)' } });
-      // 直接更新 state 比较复杂，用多个 dispatch
-      // 简化：通过 narrative 提示，体能恢复在这里手动处理
+      dispatch({ type: 'DRINK_WATER' });
       return;
     }
 
