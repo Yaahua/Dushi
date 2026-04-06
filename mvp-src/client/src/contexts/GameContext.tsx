@@ -1,4 +1,9 @@
 import React, { createContext, useContext, useReducer, useCallback, useEffect, useRef } from 'react';
+import type { NarrativeLine } from '@/types/narrative';
+import { NarrativeManager } from '@/managers/NarrativeManager';
+import { OPERATION_CONFIG, PROGRESS_COMPLETE_CONFIG } from '@/config/operations';
+import type { OperationConfig } from '@/config/operations';
+import { makeId, createSystemLine, createDangerLine, createSceneLine, applyOperationConfig } from '@/utils/narrativeUtils';
 
 // ===== 类型定义 =====
 export interface PlayerStats {
@@ -18,16 +23,6 @@ export interface PlayerStats {
     social: number;
     management: number;
   };
-}
-
-export interface NarrativeLine {
-  id: string;
-  type: 'scene' | 'system' | 'player' | 'danger' | 'dialogue';
-  text: string;
-  links?: { label: string; command: string }[];
-  timestamp?: number;
-  expired?: boolean;
-  actionType?: string; // 标记为操作后的交互卡片，用于过期管理
 }
 
 export interface ActionResultConfig {
@@ -163,59 +158,6 @@ const initialState: GameState = {
   foodSupply: 21, // 一周三餐 = 21 次
 };
 
-// ===== 工具函数 =====
-
-/**
- * 获取操作完成后的交互卡片
- * 优先使用场景配置的 onActionComplete，否则返回 null（不添加卡片）
- */
-function getActionResultCard(
-  location: LocationNode,
-  actionType: 'buy' | 'eat' | 'interact',
-  actionKey?: string
-): NarrativeLine | null {
-  let config: ActionResultConfig | undefined;
-  
-  if (actionType === 'interact' && actionKey) {
-    config = location.onActionComplete?.interact?.[actionKey];
-  } else {
-    config = location.onActionComplete?.[actionType];
-  }
-  
-  if (!config) return null;
-  
-  return {
-    id: makeId(),
-    type: 'scene',
-    text: config.text,
-    links: config.links,
-    actionType, // 标记类型，用于后续过期
-  };
-}
-
-/**
- * 过期掉之前同类型的交互卡片
- * 用于连续操作时，只保留最新的可操作卡片
- */
-function expireActionCards(narrative: NarrativeLine[], actionType: string): NarrativeLine[] {
-  return narrative.map(line =>
-    line.actionType === actionType && !line.expired
-      ? { ...line, expired: true }
-      : line
-  );
-}
-
-/**
- * 过期所有操作后的交互卡片（用于场景切换）
- */
-function expireAllActionCards(narrative: NarrativeLine[]): NarrativeLine[] {
-  return narrative.map(line =>
-    line.actionType && !line.expired
-      ? { ...line, expired: true }
-      : line
-  );
-}
-
 // ===== Action 类型 =====
 type GameAction =
   | { type: 'ADVANCE_INTRO' }
@@ -235,19 +177,13 @@ type GameAction =
   | { type: 'COMPLETE_PROGRESS' }
   | { type: 'UNFREEZE_MONEY' };
 
-let narrativeIdCounter = 0;
-function makeId() {
-  return `n_${++narrativeIdCounter}`;
-}
-
-// ===== 辅助函数 =====
-/** 将 narrative 中所有带 links 的历史记录标记为 expired */
-function expireNarrativeLinks(narrative: NarrativeLine[]): NarrativeLine[] {
-  return narrative.map(line =>
-    line.links && line.links.length > 0 && !line.expired
-      ? { ...line, expired: true }
-      : line
-  );
+// ===== 开发模式日志辅助 =====
+function logDebug(label: string, logs: string[]): void {
+  if (process.env.NODE_ENV === 'development') {
+    console.group(`[${label}]`);
+    logs.forEach(log => console.log(log));
+    console.groupEnd();
+  }
 }
 
 // ===== Reducer =====
@@ -281,17 +217,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         phase: 'gameplay',
         gtRunning: true,
         narrative: [
-          {
-            id: makeId(),
-            type: 'system',
-            text: '你已抵达世界公寓。系统分配了一间位于 7 楼的单元。',
-          },
-          {
-            id: makeId(),
-            type: 'scene',
-            text: loc.description,
-            links: loc.actions?.map(a => ({ label: a.label, command: a.command })),
-          },
+          createSystemLine('你已抵达世界公寓。系统分配了一间位于 7 楼的单元。'),
+          createSceneLine(loc),
         ],
       };
     }
@@ -305,23 +232,25 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'GOTO_LOCATION': {
       const loc = state.locations[action.locationId];
       if (!loc) return state;
+
       // 室内移动消耗 1 体能，室外移动消耗 3 体能
       const isIndoor = loc.type === 'indoor' && state.locations[state.currentLocation]?.type === 'indoor';
       const cost = isIndoor ? 1 : 3;
       const newStamina = Math.max(0, state.player.stamina - cost);
-      const sceneNarrative: NarrativeLine = {
-        id: makeId(),
-        type: 'scene',
-        text: loc.description,
-        links: loc.actions?.map(a => ({ label: a.label, command: a.command })),
-      };
-      // 场景切换时：过期所有旧场景的链接 + 过期所有交互卡片
-      const clearedNarrative = expireNarrativeLinks(expireAllActionCards(state.narrative));
+
+      const manager = new NarrativeManager(state.narrative);
+      applyOperationConfig(manager, OPERATION_CONFIG.GOTO_LOCATION, { location: loc });
+      // 场景切换额外添加新场景描述
+      manager.apply({ type: 'add', line: createSceneLine(loc) });
+      const { narrative, logs } = manager.getResult();
+
+      logDebug(`GOTO_LOCATION: ${action.locationId}`, logs);
+
       return {
         ...state,
         currentLocation: action.locationId,
         player: { ...state.player, stamina: newStamina },
-        narrative: [...clearedNarrative, sceneNarrative],
+        narrative,
       };
     }
 
@@ -329,9 +258,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       if (state.foodSupply <= 0) {
         return {
           ...state,
-          narrative: [...state.narrative, {
-            id: makeId(), type: 'danger', text: '冰箱里已经没有食物了。',
-          }],
+          narrative: [...state.narrative, createDangerLine('冰箱里已经没有食物了。')],
         };
       }
       return {
@@ -345,28 +272,30 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         if (state.player.money < 2) {
           return {
             ...state,
-            narrative: [...expireNarrativeLinks(state.narrative), {
-              id: makeId(), type: 'danger', text: '你的余额不足。',
-            }],
+            narrative: [...state.narrative, createDangerLine('你的余额不足。')],
           };
         }
+
         const existing = state.inventory.find(i => i.id === 'water');
         const newInv = existing
           ? state.inventory.map(i => i.id === 'water' ? { ...i, quantity: i.quantity + 1 } : i)
           : [...state.inventory, { id: 'water', name: '矿泉水', quantity: 1 }];
-        
+
+        const manager = new NarrativeManager(state.narrative);
         const loc = state.locations[state.currentLocation];
-        const actionCard = getActionResultCard(loc, 'buy');
-        // 过期之前的购买交互卡片 + 过期当前场景的链接（避免原始场景链接和新卡片同时存在）
-        const clearedNarrative = expireNarrativeLinks(expireActionCards(state.narrative, 'buy'));
-        
+        applyOperationConfig(manager, OPERATION_CONFIG.BUY_ITEM, {
+          location: loc,
+          actionType: 'buy',
+        });
+        const { narrative, logs } = manager.getResult();
+
+        logDebug('BUY_ITEM', logs);
+
         return {
           ...state,
           player: { ...state.player, money: state.player.money - 2 },
           inventory: newInv,
-          narrative: actionCard
-            ? [...clearedNarrative, { id: makeId(), type: 'system', text: '你购买了一瓶矿泉水。' }, actionCard]
-            : [...clearedNarrative, { id: makeId(), type: 'system', text: '你购买了一瓶矿泉水。' }],
+          narrative,
         };
       }
       return state;
@@ -378,7 +307,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           return {
             ...state,
             narrative: [...state.narrative, {
-              id: makeId(), type: 'scene',
+              id: makeId(), type: 'scene' as const,
               text: '你坐在沙发上。弹簧有些塔陷，但比站着舒服多了。窗外传来远处的汽车喇叭声和隐约的人声喧嚣。',
             }],
           };
@@ -387,7 +316,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           return {
             ...state,
             narrative: [...state.narrative, {
-              id: makeId(), type: 'scene',
+              id: makeId(), type: 'scene' as const,
               text: '你躺在沙发上。天花板上有一道细长的裂缝，从灯座延伸到墙角。你盯着它看了一会儿，思绪逐渐放空。',
             }],
           };
@@ -401,9 +330,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       if (!water || water.quantity <= 0) {
         return {
           ...state,
-          narrative: [...state.narrative, {
-            id: makeId(), type: 'system', text: '你没有矿泉水。',
-          }],
+          narrative: [...state.narrative, createSystemLine('你没有矿泉水。')],
         };
       }
       const newInv = state.inventory.map(i =>
@@ -414,9 +341,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         inventory: newInv,
         player: { ...state.player, stamina: newStamina },
-        narrative: [...state.narrative, {
-          id: makeId(), type: 'system', text: '你喝了一瓶矿泉水。',
-        }],
+        narrative: [...state.narrative, createSystemLine('你喝了一瓶矿泉水。')],
       };
     }
 
@@ -441,11 +366,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       // 生命值归零 → 昏迷
       const narrative = [...state.narrative];
       if (newHealth <= 0 && state.player.health > 0) {
-        narrative.push({
-          id: makeId(),
-          type: 'danger',
-          text: '你的视线逐渐模糊，身体再也支撑不住了……你昏倒在地。（昏迷）',
-        });
+        narrative.push(createDangerLine('你的视线逐渐模糊，身体再也支撑不住了……你昏倒在地。（昏迷）'));
         // TODO: 后续实现昏迷后送医院、扣费逻辑
       }
 
@@ -479,7 +400,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'COMPLETE_PROGRESS': {
       if (!state.activeProgress) return state;
       const onComplete = state.activeProgress.onComplete;
-      let newState = { ...state, activeProgress: null };
+      let newState: GameState = { ...state, activeProgress: null };
+
       if (onComplete === 'eat_done') {
         const hungerReduction = 10;
         const newHunger = Math.max(0, newState.player.hunger - hungerReduction);
@@ -488,19 +410,24 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         const canRecoverStamina = hungerPercent <= 0.5;
         const staminaRecovery = canRecoverStamina ? 2 : 0;
         const newStamina = Math.min(newState.player.maxStamina, newState.player.stamina + staminaRecovery);
-        
+
+        // 合并基础配置和进度完成配置
+        const config = { ...OPERATION_CONFIG.COMPLETE_PROGRESS, ...PROGRESS_COMPLETE_CONFIG.eat_done } as OperationConfig;
+        const manager = new NarrativeManager(newState.narrative);
         const loc = newState.locations[newState.currentLocation];
-        const actionCard = getActionResultCard(loc, 'eat');
-        // 过期之前的吃饭交互卡片 + 过期当前场景的链接
-        const clearedNarrative = expireNarrativeLinks(expireActionCards(newState.narrative, 'eat'));
-        
+        applyOperationConfig(manager, config, {
+          location: loc,
+          actionType: 'eat',
+        });
+        const { narrative, logs } = manager.getResult();
+
+        logDebug('COMPLETE_PROGRESS: eat_done', logs);
+
         newState = {
           ...newState,
           foodSupply: newState.foodSupply - 1,
           player: { ...newState.player, hunger: newHunger, stamina: newStamina },
-          narrative: actionCard
-            ? [...clearedNarrative, { id: makeId(), type: 'system', text: '你吃了一顿饭。' }, actionCard]
-            : [...clearedNarrative, { id: makeId(), type: 'system', text: '你吃了一顿饭。' }],
+          narrative,
         };
       }
       return newState;
@@ -609,10 +536,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       if (loc) {
         dispatch({
           type: 'ADD_NARRATIVE',
-          line: {
-            id: makeId(), type: 'scene', text: loc.description,
-            links: loc.actions?.map(a => ({ label: a.label, command: a.command })),
-          },
+          line: createSceneLine(loc),
         });
       }
       return;
@@ -622,7 +546,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       const items = state.inventory.length > 0
         ? state.inventory.map(i => `${i.name} x${i.quantity}`).join('、')
         : '空空如也';
-      dispatch({ type: 'ADD_NARRATIVE', line: { id: makeId(), type: 'system', text: `【背包】${items}` } });
+      dispatch({ type: 'ADD_NARRATIVE', line: createSystemLine(`【背包】${items}`) });
       return;
     }
 
@@ -631,7 +555,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    dispatch({ type: 'ADD_NARRATIVE', line: { id: makeId(), type: 'system', text: `未知指令：${cmd}` } });
+    dispatch({ type: 'ADD_NARRATIVE', line: createSystemLine(`未知指令：${cmd}`) });
   }, [state.activeProgress, state.currentLocation, state.locations, state.inventory]);
 
   return (
