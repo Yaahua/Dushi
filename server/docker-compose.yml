@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  # ─── PostgreSQL 数据库 ───────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: dushi_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dushi
+      POSTGRES_PASSWORD: dushi_secret
+      POSTGRES_DB: dushi_game
+    ports:
+      - "5432:5432"
+    volumes:
+      - dushi_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dushi -d dushi_game"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis 缓存 ──────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: dushi_redis
+    restart: unless-stopped
+    command: redis-server --requirepass dushi_redis_secret
+    ports:
+      - "6379:6379"
+    volumes:
+      - dushi_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "dushi_redis_secret", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── FastAPI 后端应用 ────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dushi_api
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app  # 开发模式热重载
+
+volumes:
+  dushi_pg_data:
+  dushi_redis_data:
