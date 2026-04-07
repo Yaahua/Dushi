@@ -1,0 +1,21 @@
+# ============================================
+# 世界公寓区域地图
+# 新玩家的起始区域
+# ============================================
+
+id: world_apartment
+name: 世界公寓
+description: |
+  新移民的第一站。
+  破旧的公寓楼群，充满了来自各地的求生者。
+
+type: residential
+
+entry_requirements:
+  identity: null
+  permits: []
+  relationships: {}
+  time_restrictions: null
+
+spots:
+  # TODO: 添加具体地点

@@ -1,0 +1,53 @@
+# ============================================
+# 地图数据格式定义
+# 定义所有地图文件应遵循的结构
+# ============================================
+
+# 区域定义
+area:
+  # 区域唯一标识
+  id: area_id_example
+  
+  # 显示名称
+  name: 区域名称
+  
+  # 区域描述
+  description: 区域的总体描述
+  
+  # 区域类型: residential/commercial/industrial/institutional/outskirts
+  type: residential
+  
+  # 准入条件
+  entry_requirements:
+    # 身份要求
+    identity: null
+    # 许可要求
+    permits: []
+    # 关系要求
+    relationships: {}
+    # 时间限制
+    time_restrictions: null
+  
+  # 地点列表
+  spots:
+    - id: spot_id_example
+      name: 地点名称
+      description: 地点描述
+      # 坐标（可选）
+      coordinates: [0, 0]
+      # 室内/室外
+      indoor: true
+      # 安全等级
+      safety_level: normal
+      # 人流密度
+      crowd_density: normal
+      # 功能标签
+      tags: [shop, food]
+      # 连接的其他地点
+      connections:
+        - target: other_spot_id
+          time_cost: 5
+          stamina_cost: 2
+          condition: null
+      # 特殊属性
+      properties: {}

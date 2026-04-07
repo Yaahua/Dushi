@@ -1,0 +1,23 @@
+# ============================================
+# 主城区地图
+# 城市的核心区域
+# ============================================
+
+id: main_district
+name: 主城区
+description: |
+  城市的繁华中心。
+  高楼林立，商业发达，但准入门槛也更高。
+
+type: commercial
+
+entry_requirements:
+  # 需要特定许可才能进入
+  identity: citizen
+  permits:
+    - residential_permit
+  relationships: {}
+  time_restrictions: null
+
+spots:
+  # TODO: 添加具体地点

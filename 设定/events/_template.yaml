@@ -1,0 +1,129 @@
+# ============================================
+# 事件配置模板
+# 复制此文件并重命名来创建新事件
+# ============================================
+
+# ========== 基础信息 ==========
+
+# 事件唯一标识
+event_id: event_template_example
+
+# 事件显示名称
+event_name: 模板事件
+
+# 事件分类: environmental/career/social/crisis/opportunity
+category: environmental
+
+# ========== 触发条件 ==========
+
+trigger:
+  # 触发类型: random/conditional/scheduled/chain
+  type: conditional
+  
+  # 触发条件列表
+  conditions:
+    # 地点条件
+    - type: location
+      area: world_apartment
+      spot: null
+    
+    # 时间条件
+    - type: time
+      period: day  # day/night/morning/evening
+      
+    # 玩家状态条件
+    - type: status
+      hunger: "> 50"
+      
+    # 关系条件
+    - type: relationship
+      npc_id: npc_example
+      value: "> 20"
+  
+  # 基础触发概率 (0-1)
+  probability: 0.3
+  
+  # 冷却时间 (GT分钟)
+  cooldown: 1440
+  
+  # 全局唯一触发（触发后不再出现）
+  once_only: false
+
+# ========== 执行效果 ==========
+
+effects:
+  # 属性变化
+  - type: stat_change
+    target: player
+    stat: hunger
+    value: -10
+    
+  # 获得/失去物品
+  - type: item
+    action: add  # add/remove
+    item_id: item_example
+    count: 1
+    
+  # 关系变化
+  - type: relationship
+    npc_id: npc_example
+    value: +5
+    
+  # 触发其他事件
+  - type: trigger_event
+    event_id: other_event
+    delay: 0
+
+# ========== 叙事内容 ==========
+
+narrative:
+  # 事件标题
+  title: 事件标题
+  
+  # 事件描述（支持多行）
+  description: |
+    事件发生的场景描述。
+    可以多行文本。
+  
+  # 玩家选项
+  choices:
+    - id: choice_a
+      text: 选项A描述
+      condition: null
+      effects:
+        - type: stat_change
+          stat: stamina
+          value: -5
+          
+    - id: choice_b
+      text: 选项B描述
+      condition: "player.money > 100"
+      effects:
+        - type: item
+          action: add
+          item_id: item_reward
+
+# ========== 后续事件 ==========
+
+next_events:
+  - event_id: follow_up_event
+    # 延迟触发时间 (GT分钟)
+    delay: 60
+    # 触发条件
+    condition: "player.choice == 'choice_a'"
+    # 触发概率
+    probability: 1.0
+
+# ========== 元数据 ==========
+
+# 创建时间
+created_at: "2026-04-07"
+
+# 最后修改时间
+updated_at: "2026-04-07"
+
+# 版本号
+version: "1.0"
+
+# 备注
+notes: ""

@@ -1,0 +1,131 @@
+# ============================================
+# NPC 配置模板
+# 复制此文件并重命名来创建新的NPC
+# ============================================
+
+# ========== 基础信息 ==========
+
+# NPC唯一标识符（全服唯一，建议使用英文小写+下划线）
+id: npc_template_example
+
+# NPC显示名称
+name: 模板NPC
+
+# NPC类型: service/story/ambient/faction
+type: service
+
+# 移动类型: static/patrol/migrant/scheduled
+mobility: static
+
+# ========== 外观与描述 ==========
+
+# 简短描述（玩家一眼看到的印象）
+description_short: 一个看起来很普通的NPC
+
+# 详细描述（观察后显示）
+description_detailed: |
+  详细的外观描述可以跨多行。
+  包括衣着、神态、特征等。
+
+# ========== 位置信息 ==========
+
+location:
+  # 所在区域ID（对应地图系统）
+  area_id: world_apartment
+  # 具体地点ID
+  spot_id: convenience_store
+  # 坐标（可选，用于精确位置）
+  coordinates: [0, 0]
+
+# 移动范围（仅patrol/migrant类型需要）
+movement_range: []
+
+# 出现时间表（仅scheduled类型需要）
+schedule: []
+
+# ========== 交互配置 ==========
+
+# 基础交互选项
+interactions:
+  - id: talk
+    name: 交谈
+    condition: null  # 触发条件
+    
+  - id: trade
+    name: 交易
+    condition: null
+    
+  - id: quest
+    name: 任务
+    condition: "player.level >= 2"  # 示例条件
+
+# ========== 对话系统 ==========
+
+dialogues:
+  # 默认 greeting，当没有特定话题时触发
+  greeting:
+    - "你好，有什么我可以帮你的吗？"
+    - "欢迎光临。"
+    
+  # 话题分支
+  topics:
+    - id: city_news
+      name: 城市新闻
+      lines:
+        - "最近城里不太平..."
+        - "听说东区的工厂要裁员了。"
+        
+    - id: personal
+      name: 个人话题
+      condition: "relationship >= 20"  # 关系值条件
+      lines:
+        - "其实我也是外乡人..."
+
+# ========== 关系与记忆 ==========
+
+# 初始对玩家的态度: hostile/cold/neutral/warm/friendly
+initial_attitude: neutral
+
+# 关系变量（影响对话和交互）
+relationship_vars:
+  - trust      # 信任
+  - respect    # 尊重
+  - affection  # 好感
+
+# 记忆标签（NPC会记住的玩家行为）
+memory_tags: []
+
+# ========== 事件关联 ==========
+
+# 可触发的事件ID列表
+triggerable_events: []
+
+# 可参与的事件ID列表
+participable_events: []
+
+# 专属事件（仅与该NPC相关）
+exclusive_events: []
+
+# ========== 商品/服务（仅service类型） ==========
+
+services:
+  - id: buy_item
+    name: 购买物品
+    items: []  # 物品ID列表
+    
+  - id: sell_item
+    name: 出售物品
+
+# ========== 元数据 ==========
+
+# 创建时间
+created_at: "2026-04-07"
+
+# 最后修改时间
+updated_at: "2026-04-07"
+
+# 版本号
+version: "1.0"
+
+# 备注（内部使用）
+notes: ""

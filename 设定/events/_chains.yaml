@@ -1,0 +1,52 @@
+# ============================================
+# 事件链定义
+# 定义多阶段、跨时间的连锁事件
+# ============================================
+
+# 事件链示例
+chains:
+  - id: chain_newcomer_journey
+    name: 新移民的旅程
+    description: 从入境到立足的完整事件链
+    
+    # 事件链阶段
+    stages:
+      - id: stage_arrival
+        name: 抵达
+        event: event_arrival
+        next:
+          - stage_id: stage_registration
+            condition: null
+            delay: 0
+            
+      - id: stage_registration
+        name: 登记
+        event: event_registration
+        next:
+          - stage_id: stage_housing
+            condition: null
+            delay: 30
+            
+      - id: stage_housing
+        name: 找房
+        event: event_find_housing
+        next:
+          - stage_id: stage_first_job
+            condition: "player.has_housing == true"
+            delay: 1440
+            
+      - id: stage_first_job
+        name: 第一份工作
+        event: event_first_job
+        next: []
+    
+    # 全局属性
+    properties:
+      # 中断条件（满足则事件链终止）
+      interrupt_conditions: []
+      # 超时时间（GT分钟，0表示无限制）
+      timeout: 0
+      # 是否可重复触发
+      repeatable: false
+
+  # TODO: 添加更多事件链
