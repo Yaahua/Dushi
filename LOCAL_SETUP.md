@@ -136,3 +136,49 @@ cd server
 docker-compose down -v   # -v 参数会删除数据卷
 docker-compose up --build
 ```
+
+**Q：Docker 镜像拉取失败/超时？**
+
+国内网络访问 Docker Hub 可能不稳定，请配置镜像加速器。打开 Docker Desktop → Settings → Docker Engine，添加：
+
+```json
+{
+  "registry-mirrors": [
+    "https://docker.1panel.live",
+    "https://docker.m.daocloud.io",
+    "https://dockerpull.org"
+  ]
+}
+```
+
+点击 Apply & Restart 后重试。
+
+**Q：后端启动报错 `CORS_ORIGINS` 解析失败？**
+
+`.env` 文件中的 `CORS_ORIGINS` 必须是 **JSON 数组格式**：
+
+```bash
+# 正确 ✅
+CORS_ORIGINS=["http://localhost:5173","http://localhost:3000"]
+
+# 错误 ❌
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+```
+
+**Q：前端 `npm install` 报依赖冲突？**
+
+使用 `--legacy-peer-deps` 参数：
+
+```bash
+cd mvp-src
+npm install --legacy-peer-deps
+```
+
+**Q：刷新页面后游戏数据重置？**
+
+这是 **MVP 阶段的已知限制**。当前后端使用内存存储，玩家数据在以下情况会重置：
+- 刷新页面 / 关闭浏览器
+- WebSocket 断开连接
+- Docker 重启
+
+第二阶段将接入 PostgreSQL 实现数据持久化。

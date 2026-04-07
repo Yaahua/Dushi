@@ -24,6 +24,30 @@
 
 ---
 
+## 本地部署问题（2026-04-07 首次部署记录）
+
+| 编号 | 问题 | 现象 | 解决方案 |
+|:---|:---|:---|:---|
+| Deploy-01 | CORS_ORIGINS 格式错误 | 后端启动报错 `JSONDecodeError` | `.env.example` 已修正为 JSON 数组格式 |
+| Deploy-02 | Docker Hub 访问超时 | 镜像拉取失败 `connectex` | 配置国内镜像加速器 |
+| Deploy-03 | npm 依赖冲突 | `ERESOLVE unable to resolve dependency tree` | 使用 `npm install --legacy-peer-deps` |
+| Deploy-04 | 前端开发服务器自动停止 | 后台任务超时导致 | 需手动在前台运行 `npm run dev` |
+| Deploy-05 | MVP 数据不持久化 | 刷新页面游戏时间重置 | 已知限制，第二阶段接入 PostgreSQL |
+
+### 部署检查清单
+
+```bash
+# 1. 后端启动后验证
+curl http://localhost:8000/api/health
+# 应返回 {"status": "ok"}
+
+# 2. 前端启动后验证
+# 浏览器访问 http://localhost:3000
+# 应看到游戏界面，WebSocket 连接成功
+```
+
+---
+
 ## 已修复
 
 | 编号 | 问题 | 修复提交 |
@@ -35,6 +59,7 @@
 | f-string 语法错误 | calculator.py / websocket.py | bde29ed |
 | WebSocket 路由 404 | Dockerfile 移除 `--reload` | beef8ee |
 | Vite 代理未配置 | `vite.config.ts` + `useWebSocket.ts` | beef8ee |
+| CORS_ORIGINS 格式 | `.env.example` JSON 数组格式 | 本次更新 |
 
 ## 已关闭（不再适用）
 
