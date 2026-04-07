@@ -35,12 +35,11 @@ export function useWebSocket({ playerId, url, onMessage, onConnect, onDisconnect
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
     // 自动检测 WebSocket URL
+    // 优先通过 Vite 代理（同源），避免跨端口问题
     const wsUrl = url || (() => {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      // 开发模式下连接后端 8000 端口
-      const host = window.location.hostname;
-      const port = '8000';
-      return `${protocol}//${host}:${port}/ws/${playerId}`;
+      const host = window.location.host; // 包含端口，走 Vite 代理
+      return `${protocol}//${host}/ws/${playerId}`;
     })();
 
     const ws = new WebSocket(wsUrl);

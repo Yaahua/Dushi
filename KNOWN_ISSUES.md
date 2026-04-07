@@ -1,22 +1,10 @@
 # 已知问题清单
 
-> 最后更新：2026-04-07 — 第一阶段后端迁移完成后
+> 最后更新：2026-04-07 — 修复 Vite 代理 + 固定后端启动方式
 
 ## 待修复
 
-### 1. WebSocket 路由 404（开发环境）
-
-**现象**：后端以 `uvicorn --reload` 模式启动后，WebSocket 路由 `/ws/{player_id}` 偶尔返回 HTTP 404。
-
-**原因**：疑似 uvicorn `--reload` 模式在热重载时路由表未正确刷新。路由注册代码本身正确（`python -c "from app.main import app"` 可以看到 `APIWebSocketRoute` 已注册）。
-
-**临时方案**：重启 uvicorn 进程（不使用 `--reload`）。
-
-**优先级**：低（仅影响开发环境）
-
----
-
-### 2. 数据库 / Redis 未连接（开发环境）
+### 1. 数据库 / Redis 未连接（开发环境）
 
 **现象**：`/api/health` 返回 `degraded`，database 和 redis 均为 error。
 
@@ -28,29 +16,7 @@
 
 ---
 
-### 3. 前端 Vite 代理未配置 WebSocket 转发
-
-**现象**：前端开发服务器（端口 3000）无法自动代理 WebSocket 请求到后端（端口 8000）。
-
-**原因**：`vite.config.ts` 中未配置 `server.proxy` 将 `/ws` 路径转发到后端。当前前端 `useWebSocket.ts` 中硬编码连接 `localhost:8000`。
-
-**修复方案**：在 `vite.config.ts` 中添加：
-```ts
-server: {
-  proxy: {
-    '/ws': {
-      target: 'http://localhost:8000',
-      ws: true,
-    },
-  },
-}
-```
-
-**优先级**：中（影响前后端联调体验）
-
----
-
-### 4. 步骤 1.8 火车站场景未实现
+### 2. 步骤 1.8 火车站场景未实现
 
 **现象**：当前场景为"世界公寓"（3 个地点），路线图要求的火车站区漫游链节点尚未实现。
 
@@ -62,9 +28,7 @@ server: {
 
 ---
 
-### 5. Python f-string 中文引号语法错误
-
-**现象**：Python 3.11 的 f-string 中使用中文引号 `""` 会导致 `SyntaxError`。
+### 3. Python f-string 中文引号语法错误
 
 **已修复文件**：
 - `server/app/engine/calculator.py`（第 182 行）
@@ -87,3 +51,5 @@ server: {
 | Bug-03 | 饥饿联动逻辑错误 | 第一阶段早期 |
 | Bug-04 | 生命值系统缺失 | 第一阶段早期 |
 | f-string 语法错误 | calculator.py / websocket.py | bde29ed |
+| WebSocket 路由 404 | Dockerfile 移除 `--reload`，避免热重载时路由表未刷新 | 本次提交 |
+| Vite 代理未配置 | `vite.config.ts` 添加 `/ws` + `/api` 代理，`useWebSocket.ts` 改为同源连接 | 本次提交 |
