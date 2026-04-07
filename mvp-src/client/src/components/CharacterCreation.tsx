@@ -20,7 +20,7 @@ const MIN_PER_SKILL = 1;
 const MAX_PER_SKILL = 10;
 
 export default function CharacterCreation() {
-  const { state, dispatch } = useGame();
+  const { state, sendAction } = useGame();
   const [gender, setGender] = useState<'男' | '女'>(state.player.gender);
   const [skills, setSkills] = useState({
     strength: 1,
@@ -48,9 +48,9 @@ export default function CharacterCreation() {
   };
 
   const handleConfirm = () => {
-    dispatch({ type: 'SET_GENDER', gender });
-    dispatch({ type: 'SET_SKILLS', skills });
-    dispatch({ type: 'FINISH_CHARACTER_CREATION', name: '新移民' });
+    sendAction({ action: 'set_gender', gender });
+    sendAction({ action: 'set_skills', skills });
+    sendAction({ action: 'finish_creation', name: '新移民' });
   };
 
   return (

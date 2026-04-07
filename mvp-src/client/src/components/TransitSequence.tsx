@@ -14,7 +14,7 @@ const TRANSIT_LINES = [
 ];
 
 export default function TransitSequence() {
-  const { dispatch } = useGame();
+  const { sendAction } = useGame();
   const [lineIndex, setLineIndex] = useState(0);
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(true);
@@ -49,7 +49,7 @@ export default function TransitSequence() {
       setAllLines(prev => [...prev, currentLine]);
       setLineIndex(lineIndex + 1);
     } else {
-      dispatch({ type: 'FINISH_TRANSIT' });
+      sendAction({ action: 'finish_transit' });
     }
   };
 

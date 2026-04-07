@@ -11,10 +11,10 @@ export default function CommandInput() {
   // 根据当前位置和输入生成补全建议
   const suggestions = useMemo(() => {
     if (!input.trim()) return [];
-    const loc = state.locations[state.currentLocation];
+    const loc = state.location;
     const allSuggestions: { label: string; command: string }[] = [];
 
-    // 位置相关动作
+    // 位置相关动作（从后端推送的 location.actions）
     if (loc?.actions) {
       loc.actions.forEach(a => allSuggestions.push(a));
     }
@@ -42,7 +42,7 @@ export default function CommandInput() {
     return allSuggestions.filter(s =>
       s.label.toLowerCase().includes(lower) || s.command.toLowerCase().includes(lower)
     );
-  }, [input, state.currentLocation, state.locations, state.inventory]);
+  }, [input, state.location, state.inventory]);
 
   useEffect(() => {
     setSelectedIndex(0);

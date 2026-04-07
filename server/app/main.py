@@ -6,7 +6,11 @@ from app.core.config import settings
 from app.core.database import init_db
 from app.core.redis import init_redis, close_redis
 from app.api.routes import router as http_router
-from app.api.websocket import router as ws_router
+from app.api.websocket import router as ws_router, manager as ws_manager, session_mgr
+from app.engine.tick import TickEngine
+
+# 全局 Tick 引擎实例
+tick_engine = TickEngine(ws_manager=ws_manager, session_mgr=session_mgr)
 
 
 @asynccontextmanager
@@ -28,10 +32,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"⚠️  数据库连接失败（将在请求时重试）：{e}")
 
-    print("🌆 都市余烬后端已就绪（无 DB/Redis 时为降级模式）")
+    # 启动 Tick 引擎
+    await tick_engine.start()
+
+    print("🌆 都市余烬后端已就绪")
     yield
 
     # 关闭时清理
+    await tick_engine.stop()
     await close_redis()
     print("🔌 后端已关闭")
 

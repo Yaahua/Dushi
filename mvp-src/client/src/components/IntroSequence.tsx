@@ -2,7 +2,7 @@ import { useGame } from '@/contexts/GameContext';
 import { useState, useEffect } from 'react';
 
 export default function IntroSequence() {
-  const { state, dispatch, introLines } = useGame();
+  const { state, sendAction, introLines } = useGame();
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(true);
   const currentLine = introLines[state.introIndex];
@@ -31,7 +31,7 @@ export default function IntroSequence() {
       setIsTyping(false);
       return;
     }
-    dispatch({ type: 'ADVANCE_INTRO' });
+    sendAction({ action: 'advance_intro' });
   };
 
   return (
