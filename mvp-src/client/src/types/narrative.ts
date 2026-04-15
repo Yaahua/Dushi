@@ -1,7 +1,7 @@
 // ============ types/narrative.ts ============
 
 /** 叙事行类型 */
-export type LineType = 'scene' | 'system' | 'player' | 'danger' | 'dialogue';
+export type LineType = 'scene' | 'system' | 'player' | 'danger' | 'warning' | 'dialogue' | 'success';
 
 /** 交互链接 */
 export interface ActionLink {

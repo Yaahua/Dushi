@@ -45,7 +45,7 @@ export default function StatusBar() {
           饥饿 {Math.floor(player.hunger)}/{player.max_hunger}
         </span>
         <span className="text-dushi-accent">
-          ¥{player.money}
+          ¥{Math.floor(player.money)}
         </span>
       </div>
     </div>

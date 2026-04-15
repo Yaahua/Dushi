@@ -179,12 +179,13 @@ class Calculator:
 
         target = locations.get(target_id)
         if not target:
-            events.append({"type": "system", "text": f"你不知道\\u201c{target_id}\\u201d在哪里。"})
+            events.append({"type": "system", "text": f"你不知道「{target_id}」在哪里。"})
             return session, events
 
         current = locations.get(session.current_location, {})
-        is_indoor = target.get("type") == "indoor" and current.get("type") == "indoor"
-        cost = Calculator.INDOOR_MOVE_COST if is_indoor else Calculator.OUTDOOR_MOVE_COST
+        # 同一建筑内移动（两者都是 indoor）消耗低；跨越室外消耗高
+        both_indoor = target.get("type") == "indoor" and current.get("type") == "indoor"
+        cost = Calculator.INDOOR_MOVE_COST if both_indoor else Calculator.OUTDOOR_MOVE_COST
         new_stamina = max(0, session.player.stamina - cost)
 
         events.append({

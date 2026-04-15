@@ -6,7 +6,9 @@ const typeColorMap: Record<string, string> = {
   system: 'text-dushi-system',
   player: 'text-dushi-player',
   danger: 'text-dushi-danger',
+  warning: 'text-yellow-400',
   dialogue: 'text-foreground',
+  success: 'text-dushi-success',
 };
 
 const typePrefixMap: Record<string, string> = {
@@ -14,7 +16,9 @@ const typePrefixMap: Record<string, string> = {
   system: '› ',
   player: '> ',
   danger: '⚠ ',
+  warning: '⚡ ',
   dialogue: '',
+  success: '✓ ',
 };
 
 export default function NarrativeStream() {

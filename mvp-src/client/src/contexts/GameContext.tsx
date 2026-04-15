@@ -144,16 +144,18 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'NARRATIVE_EVENT': {
       const evt = action.data;
+      const incomingType: string = evt.type || 'system';
       const line: NarrativeLine = {
         id: makeId(),
-        type: evt.type || 'system',
+        type: incomingType as NarrativeLine['type'],
         text: evt.text || '',
         links: evt.actions?.map((a: any) => ({ label: a.label, command: a.command })),
         locationId: evt.location_name,
       };
-      // 标记旧的同类型 action links 为失效
+      // 只有新消息是场景类型时，才过期旧的场景 links（避免 system/dialogue 消息误杀旧按钮）
+      const shouldExpireSceneLinks = incomingType === 'scene';
       const newNarrative = state.narrative.map(n => {
-        if (n.links && !n.expired) {
+        if (n.links && !n.expired && shouldExpireSceneLinks && n.type === 'scene') {
           return { ...n, expired: true };
         }
         return n;
@@ -281,8 +283,20 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (state.activeProgress) return;
 
     // ── 移动 ──
-    if (lower.startsWith('goto ') || lower.startsWith('去 ')) {
-      const target = lower.startsWith('goto ') ? lower.slice(5).trim() : lower.slice(2).trim();
+    // 支持："goto apartment_kitchen"、"去 厅房"、"去厅房"（无空格）
+    if (lower.startsWith('goto ')) {
+      const target = lower.slice(5).trim();
+      send({ action: 'goto', target });
+      return;
+    }
+    if (lower.startsWith('去 ')) {
+      const target = lower.slice(2).trim();
+      send({ action: 'goto', target });
+      return;
+    }
+    // 去 + 目标（无空格，如"去厅房"、"去楼下"）
+    if (lower.startsWith('去') && lower.length > 1 && !['去哪', '去哪儿', '去哪呢'].includes(lower)) {
+      const target = lower.slice(1).trim();
       send({ action: 'goto', target });
       return;
     }

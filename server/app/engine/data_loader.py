@@ -27,19 +27,27 @@ def load_all_locations() -> Dict[str, dict]:
     if not os.path.isdir(map_dir):
         return locations
 
-    for fname in os.listdir(map_dir):
+    # 第一阶段：收集所有 spot 的 id -> name 映射，供生成中文标签使用
+    id_to_name: Dict[str, str] = {}
+    all_spot_data: list = []
+    for fname in sorted(os.listdir(map_dir)):
         if not fname.endswith(".yaml"):
             continue
         data = _load_yaml(os.path.join(map_dir, fname))
-        spots = data.get("spots", [])
-        for spot in spots:
+        for spot in data.get("spots", []):
+            sid = spot.get("id")
+            if sid:
+                id_to_name[sid] = spot.get("name", sid)
+        all_spot_data.append((fname, data))
+
+    # 第二阶段：构建完整 locations 字典，连接标签使用真实中文名
+    for fname, data in all_spot_data:
+        for spot in data.get("spots", []):
             sid = spot.get("id")
             if not sid:
                 continue
-            # 将 connections 转换为 actions（前端快捷按钮）
             connections = spot.get("connections", [])
-            actions = _connections_to_actions(connections, spot)
-            # 判断 indoor/outdoor
+            actions = _connections_to_actions(connections, id_to_name)
             loc_type = "indoor" if spot.get("indoor", True) else "street"
             locations[sid] = {
                 "id": sid,
@@ -60,13 +68,16 @@ def load_all_locations() -> Dict[str, dict]:
     return locations
 
 
-def _connections_to_actions(connections: List[dict], spot: dict) -> List[dict]:
-    """将 connections 列表转换为前端 actions 按钮列表。"""
+def _connections_to_actions(connections: List[dict], id_to_name: Dict[str, str]) -> List[dict]:
+    """将 connections 列表转换为前端 actions 按鈕列表。
+    id_to_name: 全局 spot_id -> 中文名映射，用于生成可读标签。
+    """
     actions = []
     for conn in connections:
         target = conn.get("target", "")
         condition = conn.get("condition")
-        label = f"前往 {target}"
+        # 优先级：YAML 显式 label > 目标中文名 > 目标 ID
+        label = conn.get("label") or id_to_name.get(target) or target
         cmd = f"goto {target}"
         action = {"label": label, "command": cmd}
         if condition:
