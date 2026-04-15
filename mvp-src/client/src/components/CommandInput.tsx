@@ -1,6 +1,18 @@
 import { useGame } from '@/contexts/GameContext';
 import { useState, useRef, useEffect, useMemo } from 'react';
 
+// 通用固定指令（始终可用）
+const GLOBAL_COMMANDS = [
+  { label: '环顾四周', command: '环顾' },
+  { label: '查看背包', command: '背包' },
+  { label: '查看状态', command: '状态' },
+  { label: '查看时间', command: '时间' },
+  { label: '查看地图', command: '地图' },
+  { label: '休息 8 小时', command: '休息' },
+  { label: '交房租', command: '交房租' },
+  { label: '帮助', command: '帮助' },
+];
+
 export default function CommandInput() {
   const { state, executeCommand } = useGame();
   const [input, setInput] = useState('');
@@ -29,15 +41,15 @@ export default function CommandInput() {
       });
     }
 
-    // 通用命令
-    allSuggestions.push({ label: '环顾四周', command: '环顾' });
-    allSuggestions.push({ label: '查看背包', command: '背包' });
-
+    // 背包物品快捷指令
     if (state.inventory.find(i => i.id === 'water')) {
       allSuggestions.push({ label: '喝矿泉水', command: '喝矿泉水' });
     }
 
-    // 过滤匹配
+    // 通用固定指令
+    GLOBAL_COMMANDS.forEach(c => allSuggestions.push(c));
+
+    // 过滤匹配（支持拼音首字母模糊）
     const lower = input.toLowerCase();
     return allSuggestions.filter(s =>
       s.label.toLowerCase().includes(lower) || s.command.toLowerCase().includes(lower)
@@ -72,6 +84,12 @@ export default function CommandInput() {
         setInput(suggestions[selectedIndex].command);
         setShowSuggestions(false);
       }
+    } else if (e.key === 'Enter' && showSuggestions && suggestions[selectedIndex]) {
+      // Enter 时如果有选中的建议，直接执行
+      e.preventDefault();
+      executeCommand(suggestions[selectedIndex].command);
+      setInput('');
+      setShowSuggestions(false);
     }
   };
 
@@ -81,7 +99,7 @@ export default function CommandInput() {
     <div className="flex-shrink-0 border-t border-dushi-border relative">
       {/* 补全浮层 */}
       {showSuggestions && (
-        <div className="absolute bottom-full left-0 right-0 bg-dushi-card border border-dushi-border border-b-0 max-h-40 overflow-y-auto">
+        <div className="absolute bottom-full left-0 right-0 bg-dushi-card border border-dushi-border border-b-0 max-h-48 overflow-y-auto">
           {suggestions.map((s, i) => (
             <button
               key={i}
@@ -116,7 +134,7 @@ export default function CommandInput() {
           onFocus={() => input.trim() && setShowSuggestions(suggestions.length > 0)}
           onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
           disabled={disabled}
-          placeholder={disabled ? '请等待...' : '输入指令...'}
+          placeholder={disabled ? '请等待...' : '输入指令（帮助 查看全部）...'}
           className="flex-1 bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground"
           autoFocus
         />

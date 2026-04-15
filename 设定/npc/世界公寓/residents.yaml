@@ -1,0 +1,408 @@
+# ============================================
+# 世界公寓 NPC 设定
+# 居民、店员、管理员
+# ============================================
+
+npcs:
+
+  # ── 管理员 ────────────────────────────────────────────────────────
+
+  - id: manager_lao_chen
+    name: 老陈
+    full_name: 陈建国
+    gender: 男
+    age: 58
+    role: 公寓管理员
+    location: apartment_lobby
+    schedule:
+      morning: apartment_lobby
+      afternoon: apartment_lobby
+      evening: apartment_rooftop
+      night: manager_room
+
+    appearance: |
+      一个五十多岁的男人，头发花白，皮肤黝黑，像是长期在户外晒过的那种黑。
+      总是穿着一件洗了很多次的蓝色工作服，胸口的口袋里插着一支圆珠笔。
+      走路有些驼背，但眼神锐利，什么都逃不过他的眼睛。
+
+    personality:
+      traits: [沉默寡言, 观察力强, 心地善良, 表面冷漠]
+      speech_style: 话不多，但说出来的话都有分量，偶尔会用家乡话骂人
+
+    background: |
+      在这栋楼当了二十年管理员，见过太多人来了又走。
+      年轻时在工厂做过工人，后来工厂倒闭，辗转来到这里。
+      有一个女儿在外地工作，很少回来。
+      他知道这栋楼里每个人的故事，但从不主动说出来。
+      楼顶的那几盆花是他种的。
+
+    relationship_initial: 0
+    relationship_max: 100
+
+    dialogues:
+      greeting:
+        - "（抬头看了你一眼，又低下头继续看手机）"
+        - "新来的？7楼702？"
+        - "有什么事？"
+      
+      topics:
+        - id: about_building
+          trigger: ask_building
+          lines:
+            - "这栋楼建了三十年了。什么都坏过，什么都修过。"
+            - "楼里的人换了一批又一批，但楼还在。"
+        
+        - id: about_city
+          trigger: ask_city
+          lines:
+            - "主城区？那边不一样。去了就知道了。"
+            - "我在这边住了二十年，没想过去那边。"
+        
+        - id: about_work
+          trigger: ask_work
+          lines:
+            - "找工作？去劳动局登记，或者去招聘中介。"
+            - "楼里有几个人在外面打工，你可以问问他们。"
+        
+        - id: about_rent
+          trigger: ask_rent
+          lines:
+            - "房租7号之前交，别拖。"
+            - "上个月有人拖了半个月，我把他的门锁换了。"
+        
+        - id: high_relationship
+          condition: "relationship > 60"
+          lines:
+            - "（递给你一根烟）上去坐坐？楼顶风景不错。"
+            - "你这孩子还行。比上个月那个强多了。"
+
+      events:
+        - id: first_meeting
+          trigger: first_encounter
+          text: |
+            管理员抬起头，打量了你一眼。
+            "新来的？7楼702。钥匙在这。"
+            他从抽屉里拿出一把钥匙，放在柜台上，没有递给你。
+            "房租350，每月7号前交。水电另算。"
+            说完，他又低下头看手机，像是你已经不存在了。
+
+  # ── 邻居们 ────────────────────────────────────────────────────────
+
+  - id: neighbor_old_chen
+    name: 陈大爷
+    full_name: 陈福生
+    gender: 男
+    age: 67
+    role: 退休居民
+    location: apartment_corridor_7f
+    schedule:
+      morning: apartment_corridor_7f
+      afternoon: apartment_main  # 在自己房间
+      evening: apartment_corridor_7f
+      night: apartment_main
+
+    appearance: |
+      一个头发全白的老人，穿着整洁的居家服，脚上是一双布鞋。
+      总是拿着一个保温杯，里面装着他自己泡的菊花茶。
+      脸上有很深的皱纹，但笑起来眼睛会眯成一条缝。
+
+    personality:
+      traits: [热情, 话多, 有点八卦, 真诚善良]
+      speech_style: 喜欢聊天，会主动和人打招呼，说话带着北方口音
+
+    background: |
+      在这栋楼住了十五年，是楼里住得最久的居民之一。
+      退休前是工厂的技术工人，退休金不多，但够用。
+      老伴去世三年了，子女都在外地，平时一个人住。
+      喜欢在走廊里和邻居聊天，是楼里的"活地图"，什么事都知道。
+
+    relationship_initial: 10
+    relationship_max: 100
+
+    dialogues:
+      greeting:
+        - "哎，新来的？我就说嘛，702那间空了好久了。"
+        - "小伙子/小姑娘，吃了吗？"
+        - "出去啊？外面冷，多穿点。"
+      
+      topics:
+        - id: about_neighbors
+          trigger: ask_neighbors
+          lines:
+            - "楼里的人啊，各有各的故事。701的小刘，年轻人，晚上才回来，不知道做什么的。"
+            - "楼下便利店的小美，挺好的孩子，就是话少。"
+            - "老王头在楼顶种花，每天早上去浇水，风雨无阻。"
+        
+        - id: about_area
+          trigger: ask_area
+          lines:
+            - "这片区啊，以前更热闹的。现在年轻人都往主城区跑。"
+            - "街边那个大排档，老王的手艺不错，便宜实惠，你可以去试试。"
+        
+        - id: about_life
+          trigger: ask_life
+          lines:
+            - "退休了，没什么大事。每天喝喝茶，和邻居聊聊天，挺好的。"
+            - "年轻的时候总想着要出人头地，老了才知道，平平安安就是福。"
+
+      events:
+        - id: first_meeting
+          trigger: first_encounter
+          text: |
+            走廊里，一个白发老人正端着保温杯站在门口晒太阳。
+            他看到你，眼睛一亮，主动迎上来。
+            "哎，你就是702的新住客吧？我是703的，叫我陈大爷就行。"
+            他热情地握了握你的手，"刚来的话，有什么不懂的就来问我，
+            这栋楼我住了十五年，什么都知道。"
+
+  - id: neighbor_xiao_liu
+    name: 小刘
+    full_name: 刘浩然
+    gender: 男
+    age: 26
+    role: 外卖员（兼职）
+    location: apartment_corridor_7f
+    schedule:
+      morning: apartment_main  # 睡觉
+      afternoon: world_apartment_street  # 出门送外卖
+      evening: world_apartment_street
+      night: apartment_corridor_7f  # 回来
+
+    appearance: |
+      一个二十多岁的年轻人，穿着外卖平台的黄色工作服，
+      头盔挂在手上，脸上有些疲惫，但眼神还算有神。
+      身上总是有一股汗味和外卖的气味混合在一起。
+
+    personality:
+      traits: [务实, 有点悲观, 但不放弃, 话不多]
+      speech_style: 说话直接，不喜欢绕弯子，偶尔会苦笑
+
+    background: |
+      来自小城市，大专毕业后来这里找工作，没找到合适的，
+      就先做外卖员维持生计。每天工作十二小时以上，收入勉强够房租和生活。
+      有时候会想回家，但又不甘心就这样回去。
+      701房间，和702（玩家）是邻居。
+
+    relationship_initial: 5
+    relationship_max: 100
+
+    dialogues:
+      greeting:
+        - "（匆匆经过）哦，你好。"
+        - "（刚回来，摘下头盔）累死了。"
+      
+      topics:
+        - id: about_work
+          trigger: ask_work
+          lines:
+            - "外卖啊，钱不多，但自由。至少没人管你。"
+            - "想找其他工作？去招聘中介看看，但别期望太高。"
+            - "我也想找个稳定的工作，但没有本地户口，很多地方不要。"
+        
+        - id: about_city
+          trigger: ask_city
+          lines:
+            - "主城区？我每天都去，送外卖。那边的人有钱，但也不好说话。"
+            - "你要去的话，先去劳动局登记，不然很多地方不让你进。"
+        
+        - id: high_relationship
+          condition: "relationship > 50"
+          lines:
+            - "（犹豫了一下）你要找工作的话，我可以帮你问问，我认识几个包工头。"
+            - "有时候我会多接一些单，如果你也想做外卖，可以跟我一起。"
+
+      events:
+        - id: first_meeting
+          trigger: first_encounter
+          text: |
+            深夜，走廊里传来开门声，你看到一个穿着外卖服的年轻人走进隔壁房间。
+            他注意到你，停下脚步，打量了你一眼。
+            "702的新住客？"他的声音有些沙哑，"我是701的。刘浩然。"
+            他没有伸手，只是点了点头，"有什么事可以敲门，但白天我一般不在。"
+            说完，他推开门进去了，门关上的声音很轻。
+
+  - id: neighbor_ms_wang
+    name: 王姐
+    full_name: 王秀兰
+    gender: 女
+    age: 42
+    role: 钟点工
+    location: apartment_laundry
+    schedule:
+      morning: apartment_laundry
+      afternoon: apartment_laundry
+      evening: apartment_main  # 自己房间
+      night: apartment_main
+
+    appearance: |
+      一个四十多岁的女人，圆脸，头发扎成马尾，总是穿着围裙。
+      手很粗糙，是长期做家务留下的痕迹。
+      笑起来很爽朗，声音也大，整个洗衣房都能听到她说话。
+
+    personality:
+      traits: [热情开朗, 爱帮忙, 有点强势, 刀子嘴豆腐心]
+      speech_style: 说话大声，喜欢用感叹号，会主动给建议
+
+    background: |
+      离婚后一个人带着孩子来到这个城市，孩子已经上了初中。
+      做钟点工，帮几户人家打扫卫生、做饭，收入还算稳定。
+      在洗衣房认识了很多邻居，成了楼里的"消息中心"之一。
+      心地好，经常帮邻居带东西、传话。
+
+    relationship_initial: 15
+    relationship_max: 100
+
+    dialogues:
+      greeting:
+        - "哎，来洗衣服啊？3号机最好用！"
+        - "新来的吧？我是王秀兰，叫我王姐就行！"
+        - "洗衣粉要不要？我这里多的。"
+      
+      topics:
+        - id: about_work
+          trigger: ask_work
+          lines:
+            - "找工作啊？我认识几个雇主，需要钟点工的。你会做饭吗？"
+            - "钟点工不稳定，但灵活。你要是有其他技能，可以找找其他的。"
+        
+        - id: about_building
+          trigger: ask_building
+          lines:
+            - "这栋楼啊，住的都是老实人，不用担心。就是有时候会停水，要提前储水！"
+            - "公告栏上有很多信息，你要找工作或者买东西，可以去看看。"
+        
+        - id: about_life
+          trigger: ask_life
+          lines:
+            - "一个人带孩子，不容易，但也没什么大不了的！"
+            - "你刚来，肯定有很多不适应的地方，有什么不懂的就问我！"
+
+  - id: neighbor_old_zhang
+    name: 老张
+    full_name: 张明远
+    gender: 男
+    age: 63
+    role: 退休居民（前工程师）
+    location: apartment_rooftop
+    schedule:
+      morning: apartment_rooftop
+      afternoon: apartment_main  # 自己房间
+      evening: apartment_main
+      night: apartment_main
+
+    appearance: |
+      一个六十多岁的老人，戴着眼镜，穿着朴素但整洁。
+      手指修长，像是做过精细工作的人。
+      说话慢条斯理，总是想清楚了再开口。
+
+    personality:
+      traits: [沉稳, 博学, 有点孤独, 喜欢观察]
+      speech_style: 说话有条理，喜欢用比喻，偶尔会说一些深刻的话
+
+    background: |
+      退休前是工厂的工程师，退休后搬到这里，原因不详。
+      每天早上来楼顶浇花、看风景，是他的固定习惯。
+      读了很多书，对城市的历史和变迁有自己的看法。
+      偶尔会和愿意聊天的人分享他的观察和想法。
+
+    relationship_initial: 5
+    relationship_max: 100
+
+    dialogues:
+      greeting:
+        - "（正在浇花，头也不抬）早。"
+        - "来看风景？"
+        - "今天天气不错。"
+      
+      topics:
+        - id: about_city
+          trigger: ask_city
+          lines:
+            - "这座城市啊，三十年前我就来过。那时候主城区还没这么多高楼。"
+            - "城市在变，人也在变。但有些东西是不变的。"
+        
+        - id: about_rooftop_plants
+          trigger: ask_plants
+          lines:
+            - "这些花，是我种的。在这种地方，能看到绿色，心里会好一点。"
+            - "你要是喜欢，可以来帮我浇水。我年纪大了，有时候忘记。"
+        
+        - id: about_life
+          trigger: ask_life
+          lines:
+            - "活到这个年纪，想明白了很多事。也放下了很多事。"
+            - "你还年轻，有很多可能性。不要太早就认定了某条路。"
+        
+        - id: high_relationship
+          condition: "relationship > 70"
+          lines:
+            - "（指着远处的主城区）你看那边的灯光，每一盏灯背后都是一个故事。"
+            - "我年轻的时候，也想去那边。后来去了，又回来了。人生就是这样。"
+
+  # ── 便利店店员 ────────────────────────────────────────────────────
+
+  - id: shopkeeper_xiao_mei
+    name: 小美
+    full_name: 林美华
+    gender: 女
+    age: 23
+    role: 便利店店员
+    location: convenience_store
+    schedule:
+      all: convenience_store  # 24小时轮班
+
+    appearance: |
+      一个二十多岁的年轻女孩，穿着便利店的制服，头发扎成马尾。
+      脸上没有什么表情，但不是冷漠，更像是一种疲惫的平静。
+      眼睛很大，但总是有些空洞，像是在想别的事情。
+
+    personality:
+      traits: [内敛, 认真负责, 有点疏离, 但内心细腻]
+      speech_style: 说话简短，职业化，但偶尔会说一些出乎意料的话
+
+    background: |
+      来自南方小城，高中毕业后来这里打工，已经在便利店工作了两年。
+      每天工作十小时，轮班，工资不高，但稳定。
+      有一个男朋友在另一个城市，两人异地，见面不多。
+      喜欢在下班后看小说，是她唯一的爱好。
+
+    relationship_initial: 0
+    relationship_max: 100
+
+    dialogues:
+      greeting:
+        - "欢迎光临。"
+        - "需要什么？"
+        - "（正在整理货架，头也不抬）来了。"
+      
+      topics:
+        - id: about_store
+          trigger: ask_store
+          lines:
+            - "24小时营业，什么都有。"
+            - "微波炉在那边，可以自己加热。"
+        
+        - id: high_relationship
+          condition: "relationship > 40"
+          lines:
+            - "（难得地抬起头）你最近来得挺勤的。"
+            - "今天有新到的面包，刚进的货，要不要试试？"
+          
+        - id: very_high_relationship
+          condition: "relationship > 70"
+          lines:
+            - "（低声）有时候我也不知道在这里待着是为了什么。"
+            - "你有没有想过，如果当初选了另一条路，现在会在哪里？"
+
+      events:
+        - id: first_purchase
+          trigger: first_buy
+          text: |
+            店员面无表情地扫了你的商品，报出价格。
+            你付钱，她找零，动作熟练而机械。
+            "谢谢惠顾。"
+            她的声音平淡，像是说了一万遍的台词。
+            但当你转身要走的时候，她突然开口：
+            "新来的？"
+            你点头。
+            "楼里的人都挺好的。"她停顿了一下，"大多数。"

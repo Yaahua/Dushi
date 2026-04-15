@@ -1,0 +1,475 @@
+# ============================================
+# 事件链设定
+# 新移民立足事件链 + 日常随机事件
+# ============================================
+
+# ── 主线事件链 ────────────────────────────────────────────────────────
+
+event_chains:
+
+  - id: chain_newcomer_survival
+    name: 新移民立足
+    description: 玩家初到城市，需要完成一系列任务才能站稳脚跟
+    type: main
+    auto_start: true
+    
+    stages:
+      
+      - id: stage_1_settle_in
+        name: 安顿下来
+        description: 熟悉住所和周边环境
+        objectives:
+          - id: obj_explore_apartment
+            text: 探索公寓的各个房间
+            type: visit_spots
+            spots: [apartment_kitchen, apartment_bathroom, apartment_corridor_7f]
+            reward: {}
+          - id: obj_check_bulletin
+            text: 查看公告栏
+            type: visit_spot
+            spot: apartment_bulletin_board
+            reward:
+              narrative: "你在公告栏上看到了一些有用的信息，对这栋楼有了初步了解。"
+          - id: obj_meet_manager
+            text: 和管理员打个招呼
+            type: talk_to_npc
+            npc_id: manager_lao_chen
+            reward:
+              relationship_change:
+                npc_id: manager_lao_chen
+                amount: 5
+        completion_reward:
+          narrative: |
+            你已经基本熟悉了新家的环境。
+            这里虽然简陋，但至少是你在这座城市的落脚点。
+            接下来，你需要想办法维持生计。
+          unlock_next_stage: true
+
+      - id: stage_2_find_food
+        name: 解决温饱
+        description: 确保自己不会挨饿
+        objectives:
+          - id: obj_first_meal
+            text: 吃一顿饭（任何方式）
+            type: eat_food
+            reward:
+              narrative: "填饱肚子之后，你感觉好多了。活下去，才能谈其他的。"
+          - id: obj_explore_street
+            text: 探索门前街道
+            type: visit_spot
+            spot: world_apartment_street
+            reward: {}
+        completion_reward:
+          narrative: |
+            你已经知道在哪里可以找到食物了。
+            楼下便利店、街边大排档，都是选择。
+            虽然不算丰盛，但够用。
+          unlock_next_stage: true
+
+      - id: stage_3_find_work
+        name: 找到第一份工作
+        description: 赚到第一桶金，支付下一个月的房租
+        objectives:
+          - id: obj_visit_metro
+            text: 去地铁站，前往主城区
+            type: visit_spot
+            spot: metro_station_world_apt
+            reward: {}
+          - id: obj_visit_labor_bureau
+            text: 去劳动就业服务中心登记
+            type: visit_spot
+            spot: labor_bureau
+            reward:
+              tag_add: registered_worker
+              narrative: "你完成了就业登记，现在可以合法受雇了。"
+          - id: obj_get_job
+            text: 找到一份工作并完成第一天的工作
+            type: complete_work_shift
+            reward:
+              narrative: |
+                你完成了第一天的工作。
+                钱不多，但这是你在这座城市赚到的第一笔钱，
+                用自己的双手赚来的。
+        completion_reward:
+          money: 100
+          narrative: |
+            你已经找到了工作，有了稳定的收入来源。
+            虽然离你真正想要的生活还很远，
+            但至少，你在这座城市站稳了脚跟。
+            
+            接下来的路，还很长。
+          unlock_next_stage: true
+
+      - id: stage_4_pay_rent
+        name: 交第一个月的房租
+        description: 在截止日期前凑够房租
+        objectives:
+          - id: obj_pay_rent
+            text: 在第7天前交清房租（¥350）
+            type: pay_rent
+            deadline_day: 7
+            amount: 350
+            reward:
+              narrative: "房租交了。又多了一个月的安稳。"
+        completion_reward:
+          narrative: |
+            你交清了第一个月的房租。
+            管理员老陈收下钱，没有多说什么，只是点了点头。
+            但你觉得，他的眼神里有一点点不一样的东西——
+            也许是认可，也许只是你的错觉。
+            
+            无论如何，你在这里又多了一个月。
+          unlock_next_stage: false  # 主线暂时到这里
+
+  - id: chain_neighbor_friendship
+    name: 邻居情谊
+    description: 与世界公寓的邻居们建立关系
+    type: side
+    auto_start: false
+    trigger: visit_corridor_3_times
+    
+    stages:
+      
+      - id: stage_1_meet_neighbors
+        name: 认识邻居
+        objectives:
+          - id: obj_meet_chen_daye
+            text: 和陈大爷聊天
+            type: talk_to_npc
+            npc_id: neighbor_old_chen
+            reward:
+              relationship_change:
+                npc_id: neighbor_old_chen
+                amount: 15
+          - id: obj_meet_xiao_liu
+            text: 和小刘打个招呼
+            type: talk_to_npc
+            npc_id: neighbor_xiao_liu
+            reward:
+              relationship_change:
+                npc_id: neighbor_xiao_liu
+                amount: 10
+        completion_reward:
+          narrative: |
+            你已经认识了几个邻居。
+            陈大爷热情，小刘沉默，各有各的故事。
+            在这座城市，有几个可以说话的人，也算是一种财富。
+
+      - id: stage_2_help_neighbor
+        name: 帮助邻居
+        description: 在邻居需要帮助的时候伸出援手
+        objectives:
+          - id: obj_help_chen_daye
+            text: 帮陈大爷做一件事（买东西/带东西/聊天）
+            type: help_npc
+            npc_id: neighbor_old_chen
+            reward:
+              relationship_change:
+                npc_id: neighbor_old_chen
+                amount: 20
+              narrative: "陈大爷很高兴，连声道谢，还非要给你拿了几个苹果。"
+        completion_reward:
+          narrative: |
+            你帮了陈大爷，他很感激。
+            在这栋楼里，你开始有了一点点归属感。
+            也许这里不只是一个暂时的落脚点。
+
+  - id: chain_rooftop_secret
+    name: 楼顶的秘密
+    description: 发现老张的故事，了解这栋楼更深的历史
+    type: side
+    auto_start: false
+    trigger: visit_rooftop_5_times
+    
+    stages:
+      
+      - id: stage_1_meet_old_zhang
+        name: 遇见老张
+        objectives:
+          - id: obj_talk_zhang
+            text: 和老张聊天
+            type: talk_to_npc
+            npc_id: neighbor_old_zhang
+            reward:
+              relationship_change:
+                npc_id: neighbor_old_zhang
+                amount: 10
+        completion_reward:
+          narrative: |
+            老张话不多，但你感觉他有很多故事。
+            他指着远处的主城区，说了一句让你印象深刻的话：
+            "那边的灯光，每一盏背后都是一个故事。
+            只是大多数故事，没有人记得。"
+
+      - id: stage_2_water_plants
+        name: 帮老张浇花
+        objectives:
+          - id: obj_water_3_times
+            text: 连续三天帮老张浇花
+            type: repeat_action
+            action: water_plants
+            count: 3
+            reward:
+              relationship_change:
+                npc_id: neighbor_old_zhang
+                amount: 25
+        completion_reward:
+          narrative: |
+            老张把你当成了可以信任的人。
+            某天浇完花，他突然开口，讲了一个关于这栋楼的故事——
+            关于二十年前，这里曾经发生过的一些事。
+            你不确定这些故事意味着什么，但你感觉，
+            这座城市比你想象的要复杂得多。
+
+# ── 随机日常事件 ──────────────────────────────────────────────────────
+
+random_events:
+
+  - id: event_water_outage
+    name: 停水
+    description: 公寓停水，需要提前储水或去外面解决
+    trigger:
+      type: scheduled
+      day_of_week: 3  # 周三
+      time: morning
+      probability: 0.7
+    duration: 240  # GT分钟（4小时）
+    effects:
+      - type: spot_property_change
+        spot_id: apartment_bathroom
+        property: water_available
+        value: false
+      - type: narrative
+        text: |
+          走廊里传来管理员老陈的声音：
+          "停水了！上午停到十二点，要用水的自己想办法！"
+          你想起公告栏上那张通知，懊悔自己没有提前储水。
+    resolution:
+      - type: wait
+        duration: 240
+        narrative: "停水结束了，水管里传来咕噜咕噜的声音，水恢复了。"
+      - type: find_water
+        narrative: "你找到了其他水源，解决了用水问题。"
+
+  - id: event_neighbor_noise
+    name: 邻居噪音
+    description: 深夜邻居发出噪音，影响睡眠
+    trigger:
+      type: random
+      time: night
+      probability: 0.3
+      cooldown: 3  # 至少3天才会再次触发
+    effects:
+      - type: status_change
+        status: sleep_quality
+        value: -20
+      - type: narrative
+        text: |
+          深夜，隔壁房间突然传来很响的音乐声，
+          然后是争吵声，然后是摔东西的声音，
+          然后又是音乐声。
+          你盯着天花板，睡意全无。
+    choices:
+      - id: ignore
+        text: 忍了，戴上耳机睡觉
+        effect:
+          status_change:
+            status: sleep_quality
+            value: -10
+          narrative: "你戴上耳机，努力忽视噪音，最终勉强睡着了。"
+      - id: knock_door
+        text: 去敲门，让对方小声点
+        effect:
+          probability_success: 0.6
+          success:
+            narrative: "对方开门，看到你，有些不好意思，把音量调小了。"
+            relationship_change:
+              npc_id: neighbor_xiao_liu
+              amount: -5
+          failure:
+            narrative: "没人应门，或者对方根本不在乎。你只能回去继续忍。"
+      - id: call_manager
+        text: 打电话给管理员老陈
+        condition: "relationship_manager_lao_chen > 20"
+        effect:
+          narrative: "老陈来了，在门口说了几句，噪音停了。他走的时候，朝你点了点头。"
+          relationship_change:
+            npc_id: manager_lao_chen
+            amount: 5
+
+  - id: event_found_note
+    name: 发现便条
+    description: 在门缝里发现一张神秘便条
+    trigger:
+      type: random
+      probability: 0.1
+      cooldown: 7
+      conditions:
+        - type: day_passed
+          value: 3
+    effects:
+      - type: narrative
+        text: |
+          你推开房门，一张折叠的纸条从门缝里滑落到地上。
+          你捡起来，展开，上面只有一行字：
+          "你有没有想过，这座城市为什么需要你？"
+          没有署名。
+          你不知道这是谁写的，也不知道这意味着什么。
+          你把纸条放进口袋，继续你的一天。
+    followup:
+      type: unlock_event_chain
+      chain_id: chain_rooftop_secret
+      condition: visit_rooftop
+
+  - id: event_lost_cat
+    name: 寻找失踪的猫
+    description: 帮助邻居寻找走失的猫
+    trigger:
+      type: notice_board
+      notice_id: notice_lost_cat
+      condition: read_notice
+    stages:
+      - id: find_cat
+        text: 在楼顶找到了一只橘白色的猫
+        location: apartment_rooftop
+        condition: visit_rooftop
+        reward:
+          item: stray_cat_found
+          narrative: |
+            你在楼顶看到一只橘白色的猫，正蜷缩在油漆桶花盆旁边。
+            它抬起头看了你一眼，发出一声懒洋洋的叫声。
+            这应该就是公告栏上说的"小饼"。
+      - id: return_cat
+        text: 把猫送回601
+        condition: have_item_stray_cat_found
+        reward:
+          money: 20
+          relationship_change:
+            npc_id: neighbor_601_resident
+            amount: 30
+          narrative: |
+            6楼601的门开了，一个中年女人看到你手里的猫，
+            眼睛一下子红了。
+            "小饼！"她把猫接过去，抱在怀里，
+            然后从口袋里掏出二十块钱，硬塞给你。
+            "谢谢你，真的谢谢你。"
+            你拿着那二十块钱，感觉有点奇怪——
+            不是因为钱，而是因为那种被需要的感觉。
+
+  - id: event_rent_reminder
+    name: 房租提醒
+    description: 距离房租截止日期还有两天
+    trigger:
+      type: day_before_rent
+      days_before: 2
+    effects:
+      - type: narrative
+        text: |
+          管理员老陈在走廊里碰到你，停下脚步。
+          "后天交房租。"
+          他没有多说，转身走了。
+          你看了看自己的存款，开始盘算。
+    choices:
+      - id: have_money
+        condition: "money >= 350"
+        text: 去找老陈交房租
+        effect:
+          money_change: -350
+          narrative: "你交了房租，老陈收下，在本子上记了一笔，点了点头。"
+      - id: no_money
+        condition: "money < 350"
+        text: 还没凑够……
+        effect:
+          narrative: |
+            你还没凑够房租。
+            还有两天，你需要想想办法。
+
+  - id: event_rainy_day
+    name: 大雨天
+    description: 下大雨，出行受阻，但也带来一些特殊的机会
+    trigger:
+      type: random
+      probability: 0.2
+      cooldown: 5
+    effects:
+      - type: weather_change
+        weather: heavy_rain
+      - type: movement_penalty
+        outdoor_stamina_cost_multiplier: 1.5
+      - type: narrative
+        text: |
+          窗外突然下起大雨，雨点打在玻璃上，发出密集的噼啪声。
+          出门的话会淋湿，体力消耗也会增加。
+          但雨天的城市有一种特别的气氛，
+          也许会遇到一些平时遇不到的事情。
+    special_encounters:
+      - id: shelter_together
+        trigger: visit_street_food_stall
+        probability: 0.5
+        narrative: |
+          大排档的棚子下面挤满了躲雨的人，
+          你和几个陌生人挤在一起，等待雨停。
+          旁边的人主动和你搭话，聊起了各自的故事。
+          雨停之前，你们已经像认识了很久的老朋友。
+        reward:
+          relationship_change:
+            npc_id: regular_customer_ah_ming
+            amount: 15
+
+  - id: event_job_opportunity
+    name: 意外的工作机会
+    description: 在意想不到的地方遇到工作机会
+    trigger:
+      type: random
+      probability: 0.15
+      cooldown: 7
+      conditions:
+        - type: no_active_job
+    effects:
+      - type: narrative
+        text: |
+          你在街边大排档吃饭的时候，旁边桌的一个男人突然开口：
+          "你是新来的吧？"
+          他自我介绍说是一个小工厂的老板，最近缺人手，
+          问你有没有兴趣去做几天临时工。
+          工资日结，不需要任何资质，但工作比较累。
+    choices:
+      - id: accept
+        text: 接受，去做临时工
+        effect:
+          job_add:
+            id: temp_factory_work
+            name: 工厂临时工
+            salary_per_day: 110
+            stamina_cost_per_shift: 45
+            duration: 3  # 只做3天
+          narrative: "你接受了，约好明天早上七点在工厂门口集合。"
+      - id: decline
+        text: 婉拒
+        effect:
+          narrative: "你礼貌地拒绝了，那个男人耸耸肩，转向了旁边的人。"
+
+  - id: event_package_delivery
+    name: 收到包裹
+    description: 收到一个来历不明的包裹
+    trigger:
+      type: random
+      probability: 0.05
+      cooldown: 14
+      conditions:
+        - type: day_passed
+          value: 7
+    effects:
+      - type: narrative
+        text: |
+          信箱里有一个小包裹，收件人是你的名字，
+          但没有寄件人信息，邮戳也模糊不清。
+          包裹里是一个旧手机，里面存着一条未读短信：
+          "你已经通过了第一阶段的考察。
+          如果你准备好了，去人民公园，傍晚，湖边的长椅。"
+          没有署名。
+    followup:
+      type: unlock_npc_encounter
+      npc_id: mysterious_stranger
+      location: city_park
+      time: evening

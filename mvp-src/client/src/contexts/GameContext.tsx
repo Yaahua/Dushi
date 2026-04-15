@@ -274,20 +274,21 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   // 指令执行：将文本命令转换为后端 action
   const executeCommand = useCallback((cmd: string) => {
-    const trimmed = cmd.trim().toLowerCase();
+    const trimmed = cmd.trim();
+    const lower = trimmed.toLowerCase();
 
     // 进度条进行中，不接受命令
     if (state.activeProgress) return;
 
-    if (trimmed.startsWith('goto ') || trimmed.startsWith('去')) {
-      const target = trimmed.startsWith('goto ') ? trimmed.slice(5).trim() : trimmed.slice(1).trim();
-      // 尝试匹配 location id 或名称
+    // ── 移动 ──
+    if (lower.startsWith('goto ') || lower.startsWith('去 ')) {
+      const target = lower.startsWith('goto ') ? lower.slice(5).trim() : lower.slice(2).trim();
       send({ action: 'goto', target });
       return;
     }
 
-    if (trimmed === 'eat' || trimmed === '吃东西' || trimmed === '吃饭') {
-      // 先在前端启动进度条动画，完成后再发送给后端
+    // ── 吃东西（带进度条）──
+    if (lower === 'eat' || lower === '吃东西' || lower === '吃饭') {
       dispatch({
         type: 'START_PROGRESS',
         label: '正在吃东西',
@@ -298,40 +299,127 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (trimmed === 'buy water' || trimmed === '买矿泉水') {
+    // ── 购买（通用）──
+    if (lower === 'buy water' || lower === '买矿泉水') {
       send({ action: 'buy', item: 'water' });
       return;
     }
-
-    if (trimmed === '坐沙发' || trimmed === '坐在沙发上' || trimmed === 'sit sofa') {
-      send({ action: 'interact', target: 'sofa', interact_action: 'sit' });
+    if (lower.startsWith('buy ')) {
+      const item = lower.slice(4).trim();
+      send({ action: 'buy', item });
+      return;
+    }
+    if (lower.startsWith('购买 ')) {
+      const item = lower.slice(3).trim();
+      send({ action: 'buy', item });
       return;
     }
 
-    if (trimmed === '躺沙发' || trimmed === '躺在沙发上' || trimmed === 'lie sofa') {
+    // ── 与 NPC 对话 ──
+    if (lower.startsWith('talk ') || lower.startsWith('对话 ') || lower.startsWith('找 ')) {
+      let rest = lower.startsWith('talk ') ? trimmed.slice(5).trim()
+        : lower.startsWith('对话 ') ? trimmed.slice(3).trim()
+        : trimmed.slice(2).trim();
+      // 支持 "talk 老陈 about 工作" 格式
+      const aboutIdx = rest.indexOf(' ');
+      let target = rest;
+      let topic = 'greeting';
+      if (aboutIdx > -1) {
+        target = rest.slice(0, aboutIdx);
+        topic = rest.slice(aboutIdx + 1).trim() || 'greeting';
+      }
+      send({ action: 'talk', target, topic });
+      return;
+    }
+
+    // ── 休息 ──
+    if (lower === 'rest' || lower === '休息' || lower === '睡觉') {
+      send({ action: 'rest', hours: 8 });
+      return;
+    }
+    if (lower.startsWith('rest ') || lower.startsWith('休息 ')) {
+      const hoursStr = lower.startsWith('rest ') ? lower.slice(5).trim() : lower.slice(3).trim();
+      const hours = parseInt(hoursStr, 10) || 8;
+      send({ action: 'rest', hours });
+      return;
+    }
+
+    // ── 交房租 ──
+    if (lower === 'pay rent' || lower === '交房租' || lower === '付房租' || lower === 'pay_rent') {
+      send({ action: 'pay_rent', amount: 350 });
+      return;
+    }
+    if (lower.startsWith('pay rent ') || lower.startsWith('交房租 ')) {
+      const amtStr = lower.startsWith('pay rent ') ? lower.slice(9).trim() : lower.slice(4).trim();
+      const amount = parseFloat(amtStr) || 350;
+      send({ action: 'pay_rent', amount });
+      return;
+    }
+
+    // ── 玩家状态 ──
+    if (lower === 'status' || lower === '状态' || lower === '查看状态') {
+      send({ action: 'status' });
+      return;
+    }
+
+    // ── 游戏时间 ──
+    if (lower === 'time' || lower === '时间' || lower === '几点') {
+      send({ action: 'time' });
+      return;
+    }
+
+    // ── 地图 ──
+    if (lower === 'map' || lower === '地图' || lower === '去哪') {
+      send({ action: 'map' });
+      return;
+    }
+
+    // ── 帮助 ──
+    if (lower === 'help' || lower === '帮助' || lower === '?') {
+      send({ action: 'help' });
+      return;
+    }
+
+    // ── 互动（旧版兼容）──
+    if (lower === '坐沙发' || lower === '坐在沙发上' || lower === 'sit sofa') {
+      send({ action: 'interact', target: 'sofa', interact_action: 'sit' });
+      return;
+    }
+    if (lower === '躺沙发' || lower === '躺在沙发上' || lower === 'lie sofa') {
       send({ action: 'interact', target: 'sofa', interact_action: 'lie' });
       return;
     }
 
-    if (trimmed === '看' || trimmed === '环顾' || trimmed === 'look') {
+    // ── 查看 ──
+    if (lower === '看' || lower === '环顾' || lower === 'look' || lower === '查看') {
       send({ action: 'look' });
       return;
     }
 
-    if (trimmed === '背包' || trimmed === '物品' || trimmed === 'inventory') {
+    // ── 背包 ──
+    if (lower === '背包' || lower === '物品' || lower === 'inventory' || lower === 'inv') {
       send({ action: 'inventory' });
       return;
     }
 
-    if (trimmed === '喝水' || trimmed === '喝矿泉水') {
+    // ── 喝水 ──
+    if (lower === '喝水' || lower === '喝矿泉水' || lower === 'drink water') {
       send({ action: 'drink_water' });
       return;
     }
 
-    dispatch({
-      type: 'ADD_NARRATIVE',
-      line: { id: makeId(), type: 'system', text: `未知指令：${cmd}` },
-    });
+    // ── 未知指令：发给后端处理 ──
+    // 尝试直接解析为 action（支持原始 JSON 格式）
+    if (trimmed.startsWith('{')) {
+      try {
+        const payload = JSON.parse(trimmed);
+        send(payload);
+        return;
+      } catch {}
+    }
+
+    // 发给后端，让后端返回"未知指令"提示
+    send({ action: lower });
   }, [state.activeProgress, send]);
 
   // sendAction: 直接发送结构化指令（供组件使用）

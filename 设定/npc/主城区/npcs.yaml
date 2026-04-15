@@ -1,0 +1,326 @@
+# ============================================
+# 主城区 NPC 设定
+# ============================================
+
+npcs:
+
+  - id: recruiter_ms_zhang
+    name: 张经理
+    full_name: 张慧敏
+    gender: 女
+    age: 35
+    role: 招聘中介
+    location: recruitment_agency
+    schedule:
+      day: recruitment_agency
+      afternoon: recruitment_agency
+      morning: recruitment_agency
+
+    appearance: |
+      一个三十多岁的女人，职业装，妆容精致，头发盘起来。
+      桌上摆着一排整齐的文件夹，每个文件夹上都贴着标签。
+      说话时会习惯性地点头，让你觉得她在认真听，但眼神有时会飘向电脑屏幕。
+
+    personality:
+      traits: [专业, 效率至上, 表面热情, 实则功利]
+      speech_style: 说话流畅，用词专业，喜欢用"我们这边"、"您这边"
+
+    background: |
+      做招聘中介十年，见过各种求职者。
+      对人的判断很准，能在五分钟内大致判断一个人的价值。
+      不是坏人，只是把工作看得很清楚——帮人找到工作，收取中介费，仅此而已。
+      但如果你表现出诚意，她也会给出真诚的建议。
+
+    relationship_initial: 0
+    relationship_max: 100
+
+    dialogues:
+      greeting:
+        - "您好，请坐。请问您是来找工作的吗？"
+        - "欢迎来到前程猎头，我是张慧敏，请问有什么可以帮您的？"
+      
+      topics:
+        - id: about_jobs
+          trigger: ask_jobs
+          lines:
+            - "我们这边目前有几个岗位，您的学历和工作经验方便说一下吗？"
+            - "清洁工和保安是最容易入职的，不需要特别的资质。"
+            - "如果您有一技之长，可以考虑更好的岗位，但需要相应的证明。"
+        
+        - id: about_requirements
+          trigger: ask_requirements
+          lines:
+            - "大多数岗位需要您先在劳动局完成就业登记，这是基本要求。"
+            - "有些雇主会要求居住证，建议您尽早办理。"
+        
+        - id: high_relationship
+          condition: "relationship > 50"
+          lines:
+            - "（压低声音）说实话，外卖员收入最高，但最累。清洁工最稳定。"
+            - "你看起来挺踏实的，我帮你多留意一下，有好岗位第一时间通知你。"
+
+  - id: boss_lao_wang
+    name: 老王
+    full_name: 王大勇
+    gender: 男
+    age: 52
+    role: 大排档老板
+    location: street_food_stall
+    schedule:
+      afternoon: street_food_stall
+      evening: street_food_stall
+      night: street_food_stall
+
+    appearance: |
+      一个五十多岁的男人，身材壮实，围着一条油腻的白色围裙。
+      脸上总是红扑扑的，可能是长期在炉火旁工作的缘故。
+      笑起来声音很大，能传出很远。
+
+    personality:
+      traits: [豪爽, 热情, 有点粗糙, 但讲义气]
+      speech_style: 说话大声，喜欢开玩笑，偶尔会爆粗口
+
+    background: |
+      十五年前从农村来到城市，从摆地摊开始，一步步做到现在的大排档。
+      见过太多和他一样的人，有的成功了，有的消失了。
+      对新移民有一种特殊的同情，经常会给他们多加一勺菜。
+      有一个在读大学的儿子，是他最骄傲的事情。
+
+    relationship_initial: 10
+    relationship_max: 100
+
+    dialogues:
+      greeting:
+        - "来了！吃什么？"
+        - "哎，老主顾！今天有新鲜的猪肉，要不要来一份？"
+        - "坐，坐！马上好！"
+      
+      topics:
+        - id: about_work
+          trigger: ask_work
+          lines:
+            - "找工作？我当年也是这样，什么都不会，就知道干活。"
+            - "你要是肯吃苦，这个城市不会亏待你的。"
+            - "我这里有时候需要帮手，你要是感兴趣，可以来试试。"
+        
+        - id: about_city
+          trigger: ask_city
+          lines:
+            - "这个城市啊，说好也好，说难也难。看你怎么看了。"
+            - "我刚来的时候，比你现在难多了。现在不是混出来了吗？"
+        
+        - id: high_relationship
+          condition: "relationship > 60"
+          lines:
+            - "（悄悄多加了一勺菜）别说是我给的，其他人看到要闹的。"
+            - "你这孩子不错，有什么困难跟我说，能帮的我帮。"
+
+  - id: regular_customer_ah_ming
+    name: 阿明
+    full_name: 陈阿明
+    gender: 男
+    age: 31
+    role: 建筑工人
+    location: street_food_stall
+    schedule:
+      evening: street_food_stall
+
+    appearance: |
+      一个三十多岁的男人，皮肤黝黑，手上有老茧。
+      穿着工地的工作服，还没换，直接来吃饭了。
+      眼神疲惫，但喝了啤酒之后会活跃起来。
+
+    personality:
+      traits: [直率, 有点悲观, 但不失幽默, 重情义]
+      speech_style: 说话直接，喜欢用"反正"、"就这样"，偶尔会说一些很有哲理的话
+
+    background: |
+      来自农村，在城市做建筑工人已经八年了。
+      每天工地和出租屋两点一线，偶尔来大排档喝一杯，算是最大的放松。
+      在楼梯间刻过"活着就是胜利"那句话——那是他某个特别难熬的夜晚留下的。
+      对新移民有一种惺惺相惜的感情。
+
+    relationship_initial: 5
+    relationship_max: 100
+
+    dialogues:
+      greeting:
+        - "（举起啤酒瓶）来一起喝？"
+        - "也是刚来的？"
+        - "坐，老王的菜不错的。"
+      
+      topics:
+        - id: about_work
+          trigger: ask_work
+          lines:
+            - "工地的活，累，但不难找。就是不稳定，干完这个项目不知道下一个在哪。"
+            - "反正先活下去，其他的慢慢再说。"
+        
+        - id: about_life
+          trigger: ask_life
+          lines:
+            - "活着就是胜利。这话是我说的，不是名人名言。"
+            - "有时候觉得很累，但想想还有明天，就撑过去了。"
+        
+        - id: high_relationship
+          condition: "relationship > 40"
+          lines:
+            - "（递过来一瓶啤酒）来，喝一个。不用客气。"
+            - "你要找工地的活，我可以带你去，包吃住，就是累点。"
+
+  - id: bureau_officer_lao_li
+    name: 老李
+    full_name: 李国强
+    gender: 男
+    age: 48
+    role: 劳动局工作人员
+    location: labor_bureau
+    schedule:
+      day: labor_bureau
+      afternoon: labor_bureau
+
+    appearance: |
+      一个四十多岁的男人，穿着制服，戴着工作牌。
+      脸上表情中立，不冷漠，但也不热情，是那种见过太多人的平静。
+      桌上摆着一摞文件，旁边是一杯已经凉了的茶。
+
+    personality:
+      traits: [按规矩办事, 不多说废话, 但不刁难人]
+      speech_style: 说话简洁，用词官方，但不会故意为难人
+
+    background: |
+      在劳动局工作了二十年，办理过无数的就业登记和证件申请。
+      见过太多新移民，知道他们的不容易，但也只能在规定范围内帮忙。
+      偶尔会给出一些实用的建议，但不会主动多说。
+
+    relationship_initial: 0
+    relationship_max: 60
+
+    dialogues:
+      greeting:
+        - "请问办什么业务？"
+        - "叫号了吗？请出示您的号码牌。"
+      
+      topics:
+        - id: about_registration
+          trigger: ask_registration
+          lines:
+            - "就业登记需要提供身份证件，填写申请表，审核通过后当场办理。"
+            - "登记完成后，您可以合法受雇，享受基本劳动保障。"
+        
+        - id: about_residence_permit
+          trigger: ask_residence_permit
+          lines:
+            - "居住证申请需要先完成就业登记，然后提供居住证明，审核周期约三个工作日。"
+            - "持有居住证可以享受更多公共服务，建议尽早办理。"
+        
+        - id: high_relationship
+          condition: "relationship > 40"
+          lines:
+            - "（压低声音）你先去做就业登记，然后马上申请居住证，这样最快。"
+            - "有些窗口排队时间长，你可以先去3号窗口，那边快一点。"
+
+  - id: doctor_lao_wu
+    name: 吴医生
+    full_name: 吴建平
+    gender: 男
+    age: 55
+    role: 诊所医生
+    location: city_clinic
+    schedule:
+      day: city_clinic
+      afternoon: city_clinic
+
+    appearance: |
+      一个五十多岁的男人，穿着白大褂，戴着眼镜。
+      说话简短，诊断迅速，但不会让你觉得被敷衍。
+      诊室里有一股消毒水的气味，窗台上放着一盆绿植。
+
+    personality:
+      traits: [专业, 简洁, 有职业道德, 偶尔会说几句关心的话]
+      speech_style: 说话简洁专业，不废话，但会在必要时给出真诚的建议
+
+    background: |
+      做了三十年医生，见过各种病人。
+      开这家诊所，一部分原因是不想再在大医院里被体制束缚。
+      对没有保险的病人会适当减免费用，但不会主动说。
+
+    relationship_initial: 0
+    relationship_max: 80
+
+    dialogues:
+      greeting:
+        - "哪里不舒服？"
+        - "坐，说说症状。"
+      
+      topics:
+        - id: about_health
+          trigger: ask_health
+          lines:
+            - "你的身体状况……（简要说明）。注意休息，别太拼。"
+            - "城市里的人压力都大，但身体是本钱，别把自己搞垮了。"
+        
+        - id: high_relationship
+          condition: "relationship > 50"
+          lines:
+            - "（看了看账单，划掉一部分）就这些吧，剩下的不用了。"
+            - "你要是有社会保障，下次来记得带证，能省不少钱。"
+
+  - id: mysterious_stranger
+    name: 陌生人
+    full_name: null  # 不透露
+    gender: 不明
+    age: 不明
+    role: 神秘人物
+    location: city_park
+    schedule:
+      evening: city_park
+    spawn_probability: 0.3  # 30%概率出现
+
+    appearance: |
+      一个穿着深色外套的人，坐在公园角落的长椅上。
+      帽子压得很低，看不清脸。
+      手里拿着一杯咖啡，但似乎没有在喝。
+
+    personality:
+      traits: [神秘, 话少但有深意, 似乎知道很多]
+      speech_style: 说话简短，意味深长，让人觉得话里有话
+
+    background: |
+      身份不明，目的不明。
+      但他/她似乎对这座城市了解得很深，对玩家的处境也有某种了解。
+      是否是友是敌，目前不明。
+      这是一个为后续剧情埋下的伏笔人物。
+
+    relationship_initial: 0
+    relationship_max: 100
+
+    dialogues:
+      greeting:
+        - "（没有抬头）坐吧，这里不是私人的。"
+        - "（看了你一眼）新来的？"
+      
+      topics:
+        - id: about_identity
+          trigger: ask_who
+          lines:
+            - "名字不重要。"
+            - "你更应该关心的是你自己是谁，想去哪里。"
+        
+        - id: about_city
+          trigger: ask_city
+          lines:
+            - "这座城市有很多层。你现在在最外面那层。"
+            - "进去越深，规则就越不一样。"
+        
+        - id: about_player
+          trigger: ask_me
+          lines:
+            - "（终于抬起头，打量了你一眼）你比大多数人有潜力。"
+            - "不过潜力不等于结果。"
+        
+        - id: cryptic_hint
+          condition: "relationship > 30"
+          lines:
+            - "（递给你一张纸条）这个地址，你以后可能会用到。"
+            - "记住：在这座城市，信息比金钱更值钱。"

@@ -179,7 +179,7 @@ class Calculator:
 
         target = locations.get(target_id)
         if not target:
-            events.append({"type": "system", "text": f"你不知道\u201c{target_id}\u201d在哪里。"})
+            events.append({"type": "system", "text": f"你不知道\\u201c{target_id}\\u201d在哪里。"})
             return session, events
 
         current = locations.get(session.current_location, {})
@@ -296,6 +296,232 @@ class Calculator:
             gt_running=session.gt_running,
             food_supply=session.food_supply,
             inventory=new_inv,
+            phase=session.phase,
+            intro_index=session.intro_index,
+        )
+        return new_session, events
+
+    # ─── 扩展动作：购买商品（通用）────────────────────────────────────────
+
+    @staticmethod
+    def buy_item(session: "GameSession", item_id: str, locations: dict) -> tuple["GameSession", list]:
+        """通用购买动作：从当前地点的 shop_items 或 menu 中购买指定商品。"""
+        events: list = []
+        p = session.player
+        loc = locations.get(session.current_location, {})
+        props = loc.get("properties", {})
+
+        all_items = props.get("shop_items", []) + props.get("menu", [])
+        item_def = next((i for i in all_items if i.get("id") == item_id), None)
+
+        if not item_def:
+            events.append({"type": "system", "text": f"这里没有'{item_id}'这个商品。"})
+            return session, events
+
+        price = item_def.get("price", 0)
+        if p.money < price:
+            events.append({"type": "danger", "text": f"你的余额不足，需要 ¥{price}，当前余额 ¥{p.money:.0f}。"})
+            return session, events
+
+        new_money = p.money - price
+        hunger_reduction = item_def.get("hunger_reduction", 0)
+        stamina_recovery = item_def.get("stamina_recovery", 0)
+        side_effect = item_def.get("side_effect", "")
+
+        new_hunger = max(0.0, p.hunger - hunger_reduction)
+        new_stamina = min(p.max_stamina, p.stamina + stamina_recovery)
+
+        if "hunger_increase" in side_effect:
+            try:
+                amt = float(side_effect.split("_")[-1])
+                new_hunger = min(p.max_hunger, new_hunger + amt)
+            except ValueError:
+                pass
+        if "stamina_reduce" in side_effect:
+            try:
+                amt = float(side_effect.split("_")[-1])
+                new_stamina = max(0.0, new_stamina - amt)
+            except ValueError:
+                pass
+
+        item_name = item_def.get("name", item_id)
+        events.append({"type": "system", "text": f"你购买了{item_name}（¥{price}），余额剩余 ¥{new_money:.0f}。"})
+        if hunger_reduction > 0:
+            events.append({"type": "system", "text": "饥饿感减轻了一些。"})
+        if stamina_recovery > 0:
+            events.append({"type": "system", "text": "体力略有恢复。"})
+
+        new_player = PlayerStats(
+            name=p.name, gender=p.gender,
+            health=p.health, max_health=p.max_health,
+            stamina=new_stamina, max_stamina=p.max_stamina,
+            hunger=new_hunger, max_hunger=p.max_hunger,
+            money=new_money, money_frozen=p.money_frozen,
+            skills=dict(p.skills),
+        )
+        new_session = GameSession(
+            player=new_player,
+            current_location=session.current_location,
+            gt_time=session.gt_time,
+            gt_running=session.gt_running,
+            food_supply=session.food_supply,
+            inventory=list(session.inventory),
+            phase=session.phase,
+            intro_index=session.intro_index,
+        )
+        return new_session, events
+
+    # ─── 扩展动作：支付房租 ────────────────────────────────────────────────
+
+    @staticmethod
+    def pay_rent(session: "GameSession", amount: float = 350.0) -> tuple["GameSession", list]:
+        """支付房租。"""
+        events: list = []
+        p = session.player
+
+        if p.money < amount:
+            events.append({"type": "danger", "text": f"你的余额不足以支付房租 ¥{amount:.0f}，当前余额 ¥{p.money:.0f}。"})
+            return session, events
+
+        new_money = p.money - amount
+        events.append({"type": "system", "text": f"你交了 ¥{amount:.0f} 的房租。余额剩余 ¥{new_money:.0f}。"})
+        events.append({
+            "type": "scene",
+            "text": "管理员老陈收下钱，在本子上记了一笔，点了点头。\n\"收到了。\"他没有多说，转身走了。\n你又多了一个月的安稳。",
+        })
+
+        new_player = PlayerStats(
+            name=p.name, gender=p.gender,
+            health=p.health, max_health=p.max_health,
+            stamina=p.stamina, max_stamina=p.max_stamina,
+            hunger=p.hunger, max_hunger=p.max_hunger,
+            money=new_money, money_frozen=p.money_frozen,
+            skills=dict(p.skills),
+        )
+        new_session = GameSession(
+            player=new_player,
+            current_location=session.current_location,
+            gt_time=session.gt_time,
+            gt_running=session.gt_running,
+            food_supply=session.food_supply,
+            inventory=list(session.inventory),
+            phase=session.phase,
+            intro_index=session.intro_index,
+        )
+        return new_session, events
+
+    # ─── 扩展动作：查看当前地点详情 ──────────────────────────────────────
+
+    @staticmethod
+    def look(session: "GameSession", locations: dict) -> tuple["GameSession", list]:
+        """查看当前地点的详细描述，包含时间相关描述。"""
+        events: list = []
+        loc = locations.get(session.current_location, {})
+        if not loc:
+            events.append({"type": "system", "text": "你环顾四周，什么都没有发现。"})
+            return session, events
+
+        gt_hour = (session.gt_time % (24 * 60)) // 60
+        if 5 <= gt_hour < 9:
+            time_key = "morning"
+        elif 9 <= gt_hour < 17:
+            time_key = "day"
+        elif 17 <= gt_hour < 21:
+            time_key = "evening"
+        else:
+            time_key = "night"
+
+        base_desc = loc.get("description", "").strip()
+        time_desc = loc.get("time_based_description", {}).get(time_key, "")
+        full_desc = base_desc + (f"\n\n{time_desc}" if time_desc else "")
+
+        events.append({
+            "type": "scene",
+            "text": full_desc,
+            "location_name": loc.get("name", session.current_location),
+        })
+
+        npcs_present = loc.get("npcs_present", [])
+        visible_npcs = [
+            n.get("npc_id", "") for n in npcs_present
+            if "all" in n.get("schedule", []) or time_key in n.get("schedule", [])
+        ]
+        if visible_npcs:
+            events.append({
+                "type": "system",
+                "text": f"这里有人：{', '.join(visible_npcs)}。你可以用 talk <名字> 和他们交谈。",
+            })
+
+        return session, events
+
+    # ─── 扩展动作：NPC 对话 ────────────────────────────────────────────────
+
+    @staticmethod
+    def talk_to_npc(
+        session: "GameSession",
+        npc_id: str,
+        npcs: dict,
+        topic: str = "greeting",
+        relationships: dict = None,
+    ) -> tuple["GameSession", list]:
+        """与 NPC 对话。"""
+        events: list = []
+        npc = npcs.get(npc_id)
+        if not npc:
+            events.append({"type": "system", "text": f"你找不到叫'{npc_id}'的人。"})
+            return session, events
+
+        rel = (relationships or {}).get(npc_id, npc.get("relationship_initial", 0))
+        npc_name = npc.get("name", npc_id)
+
+        if topic == "greeting":
+            from app.engine.data_loader import get_npc_greeting
+            line = get_npc_greeting(npc)
+        else:
+            from app.engine.data_loader import get_npc_dialogue
+            line = get_npc_dialogue(npc, topic, rel)
+            if not line:
+                line = f"{npc_name} 看了你一眼，没有回应。"
+
+        events.append({"type": "dialogue", "speaker": npc_name, "text": line})
+        return session, events
+
+    # ─── 扩展动作：休息恢复体能 ────────────────────────────────────────────
+
+    @staticmethod
+    def rest(session: "GameSession", hours: int = 8) -> tuple["GameSession", list]:
+        """休息指定小时数，恢复体能和健康，消耗时间。"""
+        events: list = []
+        p = session.player
+
+        stamina_per_hour = 10.0
+        health_per_hour = 2.0
+        hunger_per_hour = 3.0
+
+        total_stamina = min(p.max_stamina, p.stamina + stamina_per_hour * hours)
+        total_health = min(p.max_health, p.health + health_per_hour * hours)
+        total_hunger = min(p.max_hunger, p.hunger + hunger_per_hour * hours)
+        new_gt_time = session.gt_time + hours * 60
+
+        events.append({"type": "system", "text": f"你休息了 {hours} 小时。体力恢复至 {total_stamina:.0f}。"})
+        if total_hunger > p.max_hunger * 0.7:
+            events.append({"type": "warning", "text": "醒来后，你感到很饿。"})
+
+        new_player = PlayerStats(
+            name=p.name, gender=p.gender,
+            health=total_health, max_health=p.max_health,
+            stamina=total_stamina, max_stamina=p.max_stamina,
+            hunger=total_hunger, max_hunger=p.max_hunger,
+            money=p.money, money_frozen=p.money_frozen,
+            skills=dict(p.skills),
+        )
+        new_session = GameSession(
+            player=new_player,
+            current_location=session.current_location,
+            gt_time=new_gt_time,
+            gt_running=session.gt_running,
+            food_supply=session.food_supply,
+            inventory=list(session.inventory),
             phase=session.phase,
             intro_index=session.intro_index,
         )

@@ -1,16 +1,16 @@
 # ============================================
 # 世界公寓区域地图
-# 新玩家的起始区域
+# 新玩家的起始区域，新移民聚居地
 # ============================================
 
 id: world_apartment
 name: 世界公寓
 description: |
   新移民的第一站。
-  破旧的公寓楼群，充满了来自各地的求生者。
-
+  这片破旧的公寓楼群建于上个世纪末，曾是工人宿舍，如今已成为
+  城市边缘人的聚居地。楼道里总是混杂着廉价泡面和消毒水的气味，
+  墙壁上的涂鸦层层叠叠，记录着一代又一代过客的痕迹。
 type: residential
-
 entry_requirements:
   identity: null
   permits: []
@@ -18,4 +18,502 @@ entry_requirements:
   time_restrictions: null
 
 spots:
-  # TODO: 添加具体地点
+
+  # ── 公寓内部 ──────────────────────────────────────────────────────
+
+  - id: apartment_main
+    name: 世界公寓 - 客厅
+    description: |
+      一间狭小但整洁的公寓客厅。灰白色的墙壁上挂着一幅褪色的城市地图，
+      钉子旁边还残留着前任住客贴过的胶带痕迹。一张深灰色布艺沙发靠在窗边，
+      弹簧已经有些塌陷，但坐上去还算舒服。茶几上放着一份入住须知，
+      纸张边角已经卷起。窗外是密密麻麻的高楼轮廓，远处偶尔有霓虹灯的光芒
+      在低云层上漫反射，像是城市永不熄灭的余烬。
+    indoor: true
+    safety_level: safe
+    crowd_density: sparse
+    tags: [residence, rest]
+    coordinates: [0, 0]
+    connections:
+      - target: apartment_kitchen
+        time_cost: 1
+        stamina_cost: 0
+        condition: null
+      - target: apartment_bathroom
+        time_cost: 1
+        stamina_cost: 0
+        condition: null
+      - target: apartment_corridor_7f
+        time_cost: 1
+        stamina_cost: 0
+        condition: null
+    properties:
+      furniture:
+        - id: sofa
+          name: 布艺沙发
+          interactions: [sit, lie]
+        - id: city_map
+          name: 城市地图（褪色）
+          interactions: [look]
+        - id: notice
+          name: 入住须知
+          interactions: [read]
+      rent_due_day: 7
+      rent_amount: 350
+
+  - id: apartment_kitchen
+    name: 世界公寓 - 厨房
+    description: |
+      一间紧凑的厨房，配备了基本的灶台和冰箱。
+      冰箱贴着一张手写的食材清单，字迹潦草，像是前任住客留下的。
+      冰箱里存放着一周份量的基础食材——几袋速食米饭、罐头蔬菜和冷冻肉类。
+      灶台上有一个生锈的锅，锅底还有上次做饭留下的焦痕。
+      窗户对着隔壁楼的外墙，采光很差，白天也需要开灯。
+    indoor: true
+    safety_level: safe
+    crowd_density: sparse
+    tags: [residence, food, cooking]
+    coordinates: [0, 1]
+    connections:
+      - target: apartment_main
+        time_cost: 1
+        stamina_cost: 0
+        condition: null
+    properties:
+      appliances:
+        - id: fridge
+          name: 冰箱
+          interactions: [open, check]
+        - id: stove
+          name: 灶台
+          interactions: [use]
+
+  - id: apartment_bathroom
+    name: 世界公寓 - 卫生间
+    description: |
+      一间逼仄的卫生间，瓷砖缝隙里有黑色的霉斑。
+      镜子上有一道裂缝，从左上角延伸到中央，把你的脸分成两半。
+      热水器挂在墙上，铭牌上的字已经磨损，看不清品牌。
+      洗手台下面有一个塑料桶，用来接漏水管的滴水。
+      这里是你每天开始和结束的地方。
+    indoor: true
+    safety_level: safe
+    crowd_density: sparse
+    tags: [residence, hygiene]
+    coordinates: [0, 2]
+    connections:
+      - target: apartment_main
+        time_cost: 1
+        stamina_cost: 0
+        condition: null
+    properties:
+      appliances:
+        - id: mirror
+          name: 裂缝镜子
+          interactions: [look]
+        - id: water_heater
+          name: 热水器
+          interactions: [use]
+      water_available: true
+
+  # ── 楼道与公共区域 ────────────────────────────────────────────────
+
+  - id: apartment_corridor_7f
+    name: 世界公寓 - 7楼走廊
+    description: |
+      昏黄的节能灯把走廊照得忽明忽暗，灯管快坏了，每隔几秒就会轻微闪烁。
+      走廊两侧是一扇扇紧闭的房门，门缝里透出各种气味——有人在炒菜，
+      有人在抽烟，有人在放很响的电视。
+      墙上贴着一张手写告示："禁止在走廊堆放杂物，违者罚款。"
+      告示旁边就堆着三个纸箱。
+      楼梯口在走廊尽头，旁边有一扇锈迹斑斑的铁门，通往楼顶。
+    indoor: true
+    safety_level: normal
+    crowd_density: sparse
+    tags: [corridor, transition]
+    coordinates: [1, 0]
+    connections:
+      - target: apartment_main
+        time_cost: 1
+        stamina_cost: 0
+        condition: null
+      - target: apartment_stairwell
+        time_cost: 2
+        stamina_cost: 1
+        condition: null
+      - target: apartment_rooftop
+        time_cost: 3
+        stamina_cost: 2
+        condition: null
+      - target: apartment_bulletin_board
+        time_cost: 1
+        stamina_cost: 0
+        condition: null
+    properties:
+      npcs_present:
+        - npc_id: neighbor_old_chen
+          schedule: [morning, evening]
+        - npc_id: neighbor_xiao_liu
+          schedule: [night]
+
+  - id: apartment_stairwell
+    name: 世界公寓 - 楼梯间
+    description: |
+      混凝土楼梯，扶手是冷冰冰的铁管，上面有人用钥匙刻过字。
+      每一级台阶都会发出不同音调的响声，像是这栋楼在用自己的语言说话。
+      楼梯间没有窗户，只有每层楼道口透进来的一点光。
+      一楼到七楼，每走一层，外面的噪音就减少一分，但内心的某种东西也在一点点沉淀。
+    indoor: true
+    safety_level: normal
+    crowd_density: sparse
+    tags: [transition, corridor]
+    coordinates: [2, 0]
+    connections:
+      - target: apartment_corridor_7f
+        time_cost: 2
+        stamina_cost: 1
+        condition: null
+      - target: apartment_lobby
+        time_cost: 5
+        stamina_cost: 3
+        condition: null
+    properties:
+      graffiti:
+        - "活着就是胜利 —— 阿明"
+        - "2024.3.12 我来了"
+        - "房东是狗"
+        - "想家"
+
+  - id: apartment_rooftop
+    name: 世界公寓 - 楼顶
+    description: |
+      推开那扇锈迹斑斑的铁门，一阵风扑面而来。
+      楼顶铺着防水卷材，边缘有一圈低矮的女儿墙，墙头晾着几件衣服。
+      站在这里可以看到整个世界公寓片区——密密麻麻的低矮楼房，
+      远处是主城区的高楼大厦，在夜晚会亮起无数灯光，像是另一个世界。
+      有人在这里种了几盆植物，用废旧的油漆桶当花盆。
+      一只流浪猫蜷缩在角落里，懒洋洋地看了你一眼，又闭上眼睛。
+    indoor: false
+    safety_level: normal
+    crowd_density: sparse
+    tags: [outdoor, scenic, rest]
+    coordinates: [1, -1]
+    connections:
+      - target: apartment_corridor_7f
+        time_cost: 3
+        stamina_cost: 2
+        condition: null
+    properties:
+      npcs_present:
+        - npc_id: stray_cat
+          schedule: [all]
+        - npc_id: neighbor_old_zhang
+          schedule: [morning]
+      time_based_description:
+        morning: "清晨的空气里有淡淡的雾气，城市还没完全醒来，远处传来第一班地铁的轰鸣声。"
+        day: "白天的阳光直射下来，楼顶的防水卷材被晒得发烫，远处的高楼在热气中微微扭曲。"
+        evening: "夕阳把天边染成橙红色，主城区的轮廓在逆光中变成黑色的剪影。"
+        night: "夜晚的城市是另一番景象。霓虹灯的光芒在低云层上漫反射，远处的高楼像是嵌在黑暗中的宝石。"
+
+  - id: apartment_bulletin_board
+    name: 世界公寓 - 公告栏
+    description: |
+      走廊尽头有一块软木公告栏，上面钉满了各种纸条。
+      有房东的通知（字体工整，措辞强硬），有住户的求助（字迹潦草，语气无奈），
+      有人在找工作，有人在转让物品，有人在寻找走失的猫。
+      每一张纸条背后都是一个故事，一种处境。
+      公告栏旁边有一个小架子，上面放着几张空白纸和一支快没水的圆珠笔。
+    indoor: true
+    safety_level: safe
+    crowd_density: sparse
+    tags: [information, social]
+    coordinates: [1, 1]
+    connections:
+      - target: apartment_corridor_7f
+        time_cost: 1
+        stamina_cost: 0
+        condition: null
+    properties:
+      notices:
+        - id: notice_rent
+          type: landlord
+          text: "本月房租请于7日前缴清，逾期每日加收5%滞纳金。——管理处"
+          pinned: true
+        - id: notice_water
+          type: system
+          text: "因管道维修，本楼将于本周三上午8时至12时停水，请提前储水。"
+          pinned: false
+        - id: notice_job
+          type: resident
+          text: "本人寻工作，会做饭、打扫，手脚麻利，有意者敲7楼702。"
+          pinned: false
+        - id: notice_lost_cat
+          type: resident
+          text: "寻猫：橘白色，叫小饼，走失三天了，有线索请联系6楼601，谢谢。"
+          pinned: false
+        - id: notice_sell_items
+          type: resident
+          text: "转让：九成新电饭锅一个，¥30；旧手机一部，¥80。8楼803。"
+          pinned: false
+      can_post_notice: true
+
+  - id: apartment_laundry
+    name: 世界公寓 - 公共洗衣房
+    description: |
+      一楼角落里的公共洗衣房，放着四台滚筒洗衣机，其中一台贴着"故障"的纸条。
+      洗衣机旁边有一排塑料椅子，有时候会有人坐在这里等衣服洗好，
+      顺便和旁边的人说几句话。
+      洗衣粉的气味很浓，混合着潮湿的空气，让人想起某种遥远的家的感觉。
+      墙上贴着使用规则，最后一条是："请勿在洗衣机内洗鞋。"
+      下面有人用圆珠笔加了一句："为什么不行？"
+    indoor: true
+    safety_level: safe
+    crowd_density: normal
+    tags: [utility, social]
+    coordinates: [3, 2]
+    connections:
+      - target: apartment_lobby
+        time_cost: 2
+        stamina_cost: 1
+        condition: null
+    properties:
+      machines:
+        - id: washer_1
+          status: working
+          cost: 3
+        - id: washer_2
+          status: working
+          cost: 3
+        - id: washer_3
+          status: broken
+          cost: 0
+        - id: washer_4
+          status: working
+          cost: 3
+      npcs_present:
+        - npc_id: neighbor_ms_wang
+          schedule: [morning, afternoon]
+
+  - id: apartment_lobby
+    name: 世界公寓 - 一楼大厅
+    description: |
+      公寓楼的一楼大厅，地面是磨损的大理石纹瓷砖，缝隙里有积年的污垢。
+      左边是一排信箱，大多数已经生锈，锁也坏了，只能用手一推就开。
+      右边是管理员室，一扇半透明的玻璃门，里面总是亮着灯，
+      但不一定有人——管理员老陈经常不在，他把大部分时间都花在楼顶上。
+      大厅里有一台坏掉的饮水机，上面贴着"暂停使用"，已经贴了三个月了。
+      推开大门，就是外面的世界。
+    indoor: true
+    safety_level: normal
+    crowd_density: normal
+    tags: [transition, information]
+    coordinates: [3, 0]
+    connections:
+      - target: apartment_stairwell
+        time_cost: 5
+        stamina_cost: 3
+        condition: null
+      - target: convenience_store
+        time_cost: 2
+        stamina_cost: 1
+        condition: null
+      - target: apartment_laundry
+        time_cost: 2
+        stamina_cost: 1
+        condition: null
+      - target: world_apartment_street
+        time_cost: 1
+        stamina_cost: 0
+        condition: null
+    properties:
+      mailboxes: true
+      npcs_present:
+        - npc_id: manager_lao_chen
+          schedule: [morning, afternoon]
+
+  # ── 楼外区域 ──────────────────────────────────────────────────────
+
+  - id: convenience_store
+    name: 楼下便利店
+    description: |
+      公寓楼下的一间 24 小时便利店。白色的日光灯照亮了整齐排列的货架，
+      货架上的商品种类不多，但基本的生活用品都有。
+      收银台后面坐着一个面无表情的中年店员，正盯着一台小电视，
+      电视里在播天气预报。
+      店里有一台微波炉，供客人加热食品。
+      门口放着一个垃圾桶，旁边有一张塑料椅，偶尔有人坐在那里吃东西。
+    indoor: true
+    safety_level: safe
+    crowd_density: normal
+    tags: [shop, food, daily_goods]
+    coordinates: [4, 0]
+    connections:
+      - target: apartment_lobby
+        time_cost: 2
+        stamina_cost: 1
+        condition: null
+      - target: world_apartment_street
+        time_cost: 1
+        stamina_cost: 0
+        condition: null
+    properties:
+      shop_items:
+        - id: water
+          name: 矿泉水
+          price: 2
+          stock: 99
+        - id: instant_noodles
+          name: 方便面
+          price: 4
+          stock: 30
+          hunger_reduction: 25
+          stamina_recovery: 3
+        - id: bread
+          name: 切片面包
+          price: 6
+          stock: 15
+          hunger_reduction: 20
+          stamina_recovery: 4
+        - id: canned_food
+          name: 罐头（午餐肉）
+          price: 12
+          stock: 20
+          hunger_reduction: 35
+          stamina_recovery: 6
+        - id: energy_drink
+          name: 功能饮料
+          price: 8
+          stock: 20
+          stamina_recovery: 15
+          side_effect: hunger_increase_5
+        - id: cigarette
+          name: 香烟（一包）
+          price: 20
+          stock: 50
+          effect: stress_relief
+      npcs_present:
+        - npc_id: shopkeeper_xiao_mei
+          schedule: [all]
+      open_hours: "00:00-24:00"
+
+  - id: world_apartment_street
+    name: 世界公寓 - 门前街道
+    description: |
+      公寓楼前的一条窄街，两侧是低矮的商铺和摊位。
+      白天这里热闹非凡，卖早点的、修鞋的、收废品的，各种叫卖声混在一起。
+      晚上则安静许多，只剩下路灯的嗡嗡声和偶尔驶过的摩托车。
+      街道尽头可以看到远处主城区的轮廓，那里的灯光比这里亮得多。
+      地铁站入口就在街道拐角处，每隔几分钟就会有人从里面涌出来，
+      又有人走进去，消失在城市的某个角落。
+    indoor: false
+    safety_level: normal
+    crowd_density: crowded
+    tags: [street, outdoor, transition]
+    coordinates: [5, 0]
+    connections:
+      - target: convenience_store
+        time_cost: 1
+        stamina_cost: 0
+        condition: null
+      - target: apartment_lobby
+        time_cost: 1
+        stamina_cost: 0
+        condition: null
+      - target: street_food_stall
+        time_cost: 3
+        stamina_cost: 1
+        condition: null
+      - target: metro_station_world_apt
+        time_cost: 5
+        stamina_cost: 2
+        condition: null
+    properties:
+      time_based_description:
+        morning: "早晨的街道上飘着油条和豆浆的香气，摊贩们刚刚摆好摊位，开始一天的营生。"
+        day: "白天的街道嘈杂而充满活力，各种声音叠加在一起，构成这个片区独特的背景音。"
+        evening: "傍晚时分，下班回来的人们陆续出现，街道上的人流量达到一天中的高峰。"
+        night: "夜晚的街道安静下来，路灯把地面照出橙黄色的光圈，偶尔有猫从暗处穿过。"
+
+  - id: street_food_stall
+    name: 街边大排档
+    description: |
+      一排露天的大排档，几张折叠桌和塑料凳子摆在路边。
+      炒锅里的油烟弥漫在空气中，和着食物的香气，让人不由自主地停下脚步。
+      老板是个五十多岁的男人，围着油腻的围裙，动作麻利地翻炒着锅里的菜。
+      这里的食物便宜实惠，是附近居民的主要用餐地点之一。
+      吃饭的时候，旁边桌的人可能会主动和你搭话，也可能只是默默地低头吃饭。
+    indoor: false
+    safety_level: normal
+    crowd_density: crowded
+    tags: [food, restaurant, social]
+    coordinates: [6, 1]
+    connections:
+      - target: world_apartment_street
+        time_cost: 3
+        stamina_cost: 1
+        condition: null
+    properties:
+      menu:
+        - id: fried_rice
+          name: 蛋炒饭
+          price: 10
+          hunger_reduction: 40
+          stamina_recovery: 8
+        - id: noodle_soup
+          name: 汤面
+          price: 8
+          hunger_reduction: 35
+          stamina_recovery: 7
+        - id: stir_fry
+          name: 小炒（随机）
+          price: 15
+          hunger_reduction: 50
+          stamina_recovery: 10
+        - id: beer
+          name: 啤酒（一瓶）
+          price: 5
+          effect: mood_boost
+          side_effect: stamina_reduce_5
+      npcs_present:
+        - npc_id: boss_lao_wang
+          schedule: [afternoon, evening, night]
+        - npc_id: regular_customer_ah_ming
+          schedule: [evening]
+      open_hours: "11:00-02:00"
+
+  - id: metro_station_world_apt
+    name: 地铁站（世界公寓站）
+    description: |
+      一个小型地铁站，只有一个出入口，台阶旁边有一个坏掉的自动扶梯。
+      站厅里贴着城市地铁线路图，有几条线路已经用红笔划掉，
+      旁边写着"停运维修"，但没有注明日期。
+      检票口旁边有一台充值机，屏幕上有一道划痕，影响显示效果。
+      站台上总有风，不知道从哪里来的，带着地下特有的潮湿气息。
+      这里是通往主城区的门户，但需要足够的交通费。
+    indoor: true
+    safety_level: normal
+    crowd_density: crowded
+    tags: [transport, transition]
+    coordinates: [7, 0]
+    connections:
+      - target: world_apartment_street
+        time_cost: 5
+        stamina_cost: 2
+        condition: null
+      - target: main_district_metro
+        time_cost: 30
+        stamina_cost: 5
+        condition:
+          type: money
+          amount: 4
+          message: "你需要至少 ¥4 才能乘坐地铁。"
+    properties:
+      fare: 4
+      lines:
+        - id: line_2
+          name: 2号线
+          direction: 主城区方向
+          frequency: 10
+      npcs_present:
+        - npc_id: metro_staff
+          schedule: [all]

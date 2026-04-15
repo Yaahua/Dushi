@@ -1,23 +1,461 @@
 # ============================================
 # 主城区地图
-# 城市的核心区域
+# 城市的核心区域，新移民的奋斗目标
 # ============================================
 
 id: main_district
 name: 主城区
 description: |
-  城市的繁华中心。
-  高楼林立，商业发达，但准入门槛也更高。
-
+  城市的繁华中心。高楼林立，商业发达，但准入门槛也更高。
+  这里的每一寸土地都有价格，每一个人都在扮演某种角色。
+  对于刚从世界公寓出来的新移民来说，这里既是机遇，也是压力。
 type: commercial
-
 entry_requirements:
-  # 需要特定许可才能进入
-  identity: citizen
-  permits:
-    - residential_permit
+  identity: null
+  permits: []
   relationships: {}
   time_restrictions: null
 
 spots:
-  # TODO: 添加具体地点
+
+  # ── 交通枢纽 ──────────────────────────────────────────────────────
+
+  - id: main_district_metro
+    name: 主城区地铁站（中央站）
+    description: |
+      主城区的核心地铁站，宽阔明亮，与世界公寓那个破旧的小站形成鲜明对比。
+      大理石地面光洁如镜，反射着头顶的LED灯光。
+      四通八达的换乘通道里人流不息，每个人都走得很快，没有人会停下来看你。
+      站台上有自动售货机、便利店和快餐连锁，价格比外面贵三成。
+      出口有六个，分别通往不同方向的街道。
+    indoor: true
+    safety_level: safe
+    crowd_density: crowded
+    tags: [transport, transition]
+    coordinates: [20, 0]
+    connections:
+      - target: metro_station_world_apt
+        time_cost: 30
+        stamina_cost: 5
+        condition:
+          type: money
+          amount: 4
+          message: "你需要至少 ¥4 才能乘坐地铁。"
+      - target: main_street
+        time_cost: 3
+        stamina_cost: 1
+        condition: null
+      - target: commercial_plaza
+        time_cost: 5
+        stamina_cost: 2
+        condition: null
+    properties:
+      fare: 4
+      lines:
+        - id: line_2
+          name: 2号线
+          direction: 世界公寓方向
+          frequency: 10
+
+  # ── 主街道 ────────────────────────────────────────────────────────
+
+  - id: main_street
+    name: 中央大道
+    description: |
+      主城区的主干道，六车道，两侧是连绵的商业建筑。
+      人行道宽阔，种着整齐的行道树，树下摆着露天咖啡座。
+      广告牌和霓虹灯在白天也亮着，推销着各种你买不起的东西。
+      这里的人穿着体面，走路有目的，偶尔有人对着手机说话，
+      用你听不太懂的词汇讨论着某种业务。
+      街道尽头是一座玻璃幕墙的写字楼，楼顶的公司标志在阳光下闪闪发光。
+    indoor: false
+    safety_level: safe
+    crowd_density: crowded
+    tags: [street, outdoor, commercial]
+    coordinates: [21, 0]
+    connections:
+      - target: main_district_metro
+        time_cost: 3
+        stamina_cost: 1
+        condition: null
+      - target: commercial_plaza
+        time_cost: 5
+        stamina_cost: 2
+        condition: null
+      - target: office_district
+        time_cost: 10
+        stamina_cost: 4
+        condition: null
+      - target: city_park
+        time_cost: 8
+        stamina_cost: 3
+        condition: null
+      - target: labor_bureau
+        time_cost: 15
+        stamina_cost: 5
+        condition: null
+
+  # ── 商业区 ────────────────────────────────────────────────────────
+
+  - id: commercial_plaza
+    name: 中央广场
+    description: |
+      一个开阔的城市广场，四周是各类商业建筑。
+      广场中央有一个喷水池，池边的长椅上坐着休息的人。
+      广场上经常有各种活动——有时是街头艺人表演，有时是商业促销，
+      有时只是一群鸽子在地上觅食。
+      广场东侧是一排餐厅和咖啡馆，价格不菲，但总是坐满了人。
+      西侧是一家大型超市，里面什么都有，但不是什么都买得起。
+    indoor: false
+    safety_level: safe
+    crowd_density: crowded
+    tags: [outdoor, social, commercial]
+    coordinates: [22, 1]
+    connections:
+      - target: main_street
+        time_cost: 5
+        stamina_cost: 2
+        condition: null
+      - target: supermarket
+        time_cost: 3
+        stamina_cost: 1
+        condition: null
+      - target: cafe_district
+        time_cost: 5
+        stamina_cost: 2
+        condition: null
+    properties:
+      npcs_present:
+        - npc_id: street_performer
+          schedule: [afternoon, evening]
+        - npc_id: promotion_staff
+          schedule: [day, afternoon]
+
+  - id: supermarket
+    name: 联华超市（主城区店）
+    description: |
+      一家大型连锁超市，货架排列整齐，商品琳琅满目。
+      入口处有购物车和购物篮，背景音乐是轻柔的流行歌曲。
+      生鲜区的蔬菜水果摆放得很漂亮，价格标签用红色字体标注着"特价"。
+      与世界公寓楼下便利店相比，这里的选择更多，品质更好，价格也更高。
+      收银台前经常排队，自助结账机旁边有工作人员协助。
+    indoor: true
+    safety_level: safe
+    crowd_density: crowded
+    tags: [shop, food, daily_goods]
+    coordinates: [22, 2]
+    connections:
+      - target: commercial_plaza
+        time_cost: 3
+        stamina_cost: 1
+        condition: null
+    properties:
+      shop_items:
+        - id: fresh_vegetables
+          name: 新鲜蔬菜（一份）
+          price: 8
+          hunger_reduction: 15
+          stamina_recovery: 3
+        - id: cooked_meal
+          name: 熟食（半成品）
+          price: 18
+          hunger_reduction: 45
+          stamina_recovery: 9
+        - id: fruit
+          name: 水果（一袋）
+          price: 12
+          hunger_reduction: 10
+          stamina_recovery: 5
+        - id: medicine_basic
+          name: 基础药品（感冒药）
+          price: 25
+          effect: health_restore_10
+        - id: toiletries
+          name: 洗漱用品套装
+          price: 35
+          effect: hygiene_restore
+      npcs_present:
+        - npc_id: supermarket_staff
+          schedule: [all]
+      open_hours: "08:00-22:00"
+
+  - id: cafe_district
+    name: 咖啡馆街区
+    description: |
+      中央广场东侧的一条小街，两侧是风格各异的咖啡馆和小餐厅。
+      有连锁品牌的标准化门店，也有独立经营的特色小馆。
+      下午时分，这里总是坐满了用笔记本电脑工作的人，
+      或者两三个人凑在一起低声谈论着什么。
+      咖啡的香气和轻柔的音乐混合在一起，营造出一种与世界公寓截然不同的氛围。
+    indoor: false
+    safety_level: safe
+    crowd_density: normal
+    tags: [food, social, rest]
+    coordinates: [23, 1]
+    connections:
+      - target: commercial_plaza
+        time_cost: 5
+        stamina_cost: 2
+        condition: null
+      - target: coffee_shop_standard
+        time_cost: 2
+        stamina_cost: 0
+        condition: null
+
+  - id: coffee_shop_standard
+    name: 星辰咖啡（连锁店）
+    description: |
+      一家连锁咖啡馆，装修简洁现代，每家店都长得差不多。
+      菜单上有各种咖啡、茶饮和简餐，价格不便宜，但在主城区算是正常水平。
+      免费WiFi，插座充足，是很多人在这里工作或等人的原因。
+      收银台后面的咖啡师动作熟练，但表情和世界公寓便利店的店员一样面无表情。
+    indoor: true
+    safety_level: safe
+    crowd_density: normal
+    tags: [food, rest, work]
+    coordinates: [23, 2]
+    connections:
+      - target: cafe_district
+        time_cost: 2
+        stamina_cost: 0
+        condition: null
+    properties:
+      menu:
+        - id: coffee
+          name: 美式咖啡
+          price: 28
+          stamina_recovery: 20
+          side_effect: hunger_increase_5
+        - id: latte
+          name: 拿铁
+          price: 32
+          stamina_recovery: 15
+          hunger_reduction: 5
+        - id: sandwich
+          name: 三明治
+          price: 35
+          hunger_reduction: 30
+          stamina_recovery: 8
+      npcs_present:
+        - npc_id: barista
+          schedule: [all]
+        - npc_id: freelancer_ah_qiang
+          schedule: [afternoon]
+      open_hours: "07:00-22:00"
+      wifi: true
+
+  # ── 办公区 ────────────────────────────────────────────────────────
+
+  - id: office_district
+    name: 写字楼区
+    description: |
+      主城区的商务核心，一栋栋玻璃幕墙的写字楼排列在宽阔的大道两侧。
+      工作日的早晚高峰，这里人流如织，西装革履的人们快步走向各自的目的地。
+      楼与楼之间有连廊相连，下雨天可以不淋雨在各楼之间穿行。
+      大楼门口有保安，陌生人进入需要登记或有人接待。
+      这里是城市权力和财富的集中地，也是很多人梦寐以求的工作场所。
+    indoor: false
+    safety_level: safe
+    crowd_density: crowded
+    tags: [office, work, commercial]
+    coordinates: [25, 0]
+    connections:
+      - target: main_street
+        time_cost: 10
+        stamina_cost: 4
+        condition: null
+      - target: recruitment_agency
+        time_cost: 5
+        stamina_cost: 2
+        condition: null
+
+  - id: recruitment_agency
+    name: 前程猎头（招聘中介）
+    description: |
+      一家招聘中介公司，位于写字楼区的一栋大厦三楼。
+      前台摆着一排椅子，总是坐着等待的求职者，有的西装笔挺，有的衣着普通。
+      墙上贴着各种岗位招聘信息，从保安到高管，应有尽有。
+      工作人员会先问你的学历和工作经验，然后根据你的情况推荐岗位。
+      对于新移民来说，这里是寻找第一份工作的重要渠道，
+      但中介费不低，而且有些岗位需要特定的身份证明。
+    indoor: true
+    safety_level: safe
+    crowd_density: normal
+    tags: [work, information, service]
+    coordinates: [25, 1]
+    connections:
+      - target: office_district
+        time_cost: 5
+        stamina_cost: 2
+        condition: null
+    properties:
+      job_listings:
+        - id: job_cleaner
+          name: 清洁工
+          employer: 城市物业管理公司
+          salary_per_day: 80
+          stamina_cost_per_shift: 30
+          requirements: []
+          description: "负责写字楼公共区域的清洁工作，每天8小时，包午餐。"
+        - id: job_delivery
+          name: 外卖配送员
+          employer: 闪送平台
+          salary_per_day: 120
+          stamina_cost_per_shift: 40
+          requirements: []
+          description: "骑电动车送外卖，收入按单计算，自由时间较多。需要自备电动车（可租）。"
+        - id: job_cashier
+          name: 超市收银员
+          employer: 联华超市
+          salary_per_day: 90
+          stamina_cost_per_shift: 20
+          requirements: []
+          description: "负责超市收银工作，需要站立8小时，包午餐，有员工折扣。"
+        - id: job_security
+          name: 保安
+          employer: 城市安保公司
+          salary_per_day: 100
+          stamina_cost_per_shift: 15
+          requirements: []
+          description: "负责写字楼门口的安保工作，分日班和夜班，夜班补贴20元。"
+        - id: job_waiter
+          name: 餐厅服务员
+          employer: 星辰咖啡
+          salary_per_day: 85
+          stamina_cost_per_shift: 25
+          requirements: []
+          description: "负责咖啡馆的点单和服务工作，有小费收入，包一餐。"
+      npcs_present:
+        - npc_id: recruiter_ms_zhang
+          schedule: [day, afternoon]
+      open_hours: "09:00-18:00"
+
+  # ── 公共服务 ──────────────────────────────────────────────────────
+
+  - id: labor_bureau
+    name: 劳动就业服务中心
+    description: |
+      一栋灰色的政府建筑，门口有几根石柱，显得庄严而冷漠。
+      大厅里有很多窗口，每个窗口前都排着长队。
+      叫号机的声音每隔几分钟就会响起，宣布下一个号码。
+      墙上贴着各种政策告示，字体很小，内容很长，大多数人看不完。
+      这里可以办理就业登记、申请社会保障，以及查询各种政策信息。
+      对于新移民来说，在这里登记是获得合法工作资格的第一步。
+    indoor: true
+    safety_level: safe
+    crowd_density: crowded
+    tags: [government, service, information]
+    coordinates: [28, 2]
+    connections:
+      - target: main_street
+        time_cost: 15
+        stamina_cost: 5
+        condition: null
+    properties:
+      services:
+        - id: employment_registration
+          name: 就业登记
+          cost: 0
+          time_cost: 60  # GT分钟
+          effect: tag_add_registered_worker
+          description: "登记后可合法受雇，享受基本劳动保障。"
+        - id: social_security
+          name: 社会保障申请
+          cost: 0
+          time_cost: 120
+          requirements: [employment_registration]
+          effect: social_security_active
+          description: "申请后可享受基本医疗和失业保险。"
+        - id: id_card_application
+          name: 居住证申请
+          cost: 50
+          time_cost: 180
+          requirements: [employment_registration]
+          effect: tag_add_resident_permit
+          description: "持有居住证可进入更多区域，享受更多公共服务。"
+      npcs_present:
+        - npc_id: bureau_officer_lao_li
+          schedule: [day, afternoon]
+      open_hours: "09:00-17:00"
+      closed_days: [weekend]
+
+  - id: city_park
+    name: 人民公园
+    description: |
+      主城区少有的绿色空间，一片相对宽阔的城市公园。
+      早晨有老人在这里打太极拳，白天有带孩子的家长，傍晚有下班后来散步的上班族。
+      公园里有几条蜿蜒的小路，路边种着各种树木和花草。
+      湖边有长椅，可以坐下来休息，看鱼在水中游动。
+      公园角落里有一个小广场，偶尔有人在那里跳广场舞，音乐声传得很远。
+      这是主城区为数不多的可以免费休息、不需要消费的地方。
+    indoor: false
+    safety_level: safe
+    crowd_density: normal
+    tags: [outdoor, rest, social, free]
+    coordinates: [24, -1]
+    connections:
+      - target: main_street
+        time_cost: 8
+        stamina_cost: 3
+        condition: null
+    properties:
+      stamina_recovery_rate: 5  # 每GT小时恢复5点体能
+      npcs_present:
+        - npc_id: park_elder_tai_chi
+          schedule: [morning]
+        - npc_id: park_vendor
+          schedule: [afternoon, evening]
+        - npc_id: mysterious_stranger
+          schedule: [evening]
+          spawn_probability: 0.3
+      time_based_description:
+        morning: "清晨的公园空气清新，晨练的人们已经开始活动，鸟鸣声混合着远处的城市噪音。"
+        day: "白天的公园相对安静，偶尔有带孩子的家长，或者坐在长椅上午休的上班族。"
+        evening: "傍晚的公园是一天中最热闹的时候，各种人群聚集在这里，广场舞的音乐声此起彼伏。"
+        night: "夜晚的公园灯光昏暗，人迹稀少，偶尔有情侣在湖边散步，或者无家可归的人在长椅上休息。"
+
+  # ── 医疗 ──────────────────────────────────────────────────────────
+
+  - id: city_clinic
+    name: 仁爱诊所
+    description: |
+      一家私立诊所，位于主城区的一条支路上。
+      候诊室里摆着几排椅子，墙上挂着各科室的介绍和收费标准。
+      医生是一个五十多岁的男人，戴着眼镜，说话简短，诊断迅速。
+      这里可以处理一般的外伤和疾病，也可以进行基本的体检。
+      对于昏迷的玩家，这里是恢复的地方，但费用不低。
+      如果你没有社会保障，所有费用需要自付。
+    indoor: true
+    safety_level: safe
+    crowd_density: sparse
+    tags: [medical, service]
+    coordinates: [26, 1]
+    connections:
+      - target: main_street
+        time_cost: 12
+        stamina_cost: 4
+        condition: null
+    properties:
+      services:
+        - id: basic_treatment
+          name: 基础治疗
+          cost: 50
+          cost_with_insurance: 15
+          effect: health_restore_50
+          description: "处理轻微外伤和疾病，恢复50点生命值。"
+        - id: coma_treatment
+          name: 昏迷救治
+          cost: 200
+          cost_with_insurance: 60
+          effect: health_restore_full
+          description: "针对昏迷状态的急救处理，恢复全部生命值，需要卧床休息一段时间。"
+        - id: checkup
+          name: 基础体检
+          cost: 80
+          cost_with_insurance: 25
+          effect: status_check
+          description: "全面检查身体状况，了解各项指标。"
+      npcs_present:
+        - npc_id: doctor_lao_wu
+          schedule: [day, afternoon]
+      open_hours: "08:00-20:00"
